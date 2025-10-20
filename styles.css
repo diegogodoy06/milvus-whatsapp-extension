@@ -1,0 +1,1224 @@
+.ti-ticket-context {
+  background: var(--ti-bg-secondary);
+  border: 1px dashed rgba(0, 168, 132, 0.25);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+body[data-theme="dark"] .ti-ticket-context {
+  background: rgba(31, 32, 32, 0.8);
+  border-color: rgba(20, 77, 55, 0.45);
+}
+
+.ti-context-badge {
+  align-self: flex-start;
+  background: rgba(0, 168, 132, 0.12);
+  color: var(--ti-accent);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+body[data-theme="dark"] .ti-context-badge {
+  background: rgba(20, 77, 55, 0.35);
+  color: #d9f5e4;
+}
+
+.ti-ticket-context-contact strong {
+  font-size: 15px;
+  color: var(--ti-text-primary);
+}
+
+.ti-ticket-context-contact .ti-context-phone {
+  font-size: 13px;
+  color: var(--ti-text-secondary);
+}
+
+.ti-ticket-context-message {
+  background: var(--ti-bg-tertiary);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 13px;
+  color: var(--ti-text-secondary);
+  line-height: 1.6;
+  border: 1px solid rgba(0, 168, 132, 0.15);
+}
+
+body[data-theme="dark"] .ti-ticket-context-message {
+  background: #1f2020;
+  border-color: rgba(20, 77, 55, 0.35);
+  color: var(--ti-text-secondary);
+}
+
+.ti-ticket-context-message p {
+  margin: 0;
+}
+
+.ti-message-has-action {
+  position: relative;
+}
+
+.ti-message-action-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--ti-accent);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  opacity: 0;
+  transform: scale(0.9);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.ti-message-has-action:hover .ti-message-action-btn,
+.ti-message-has-action:focus-within .ti-message-action-btn {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.ti-message-action-btn:hover {
+  box-shadow: 0 4px 12px rgba(0, 168, 132, 0.35);
+}
+
+body[data-theme="dark"] .ti-message-action-btn {
+  background: #144D37;
+  box-shadow: 0 2px 8px rgba(20, 77, 55, 0.55);
+}
+
+body[data-theme="dark"] .ti-message-action-btn:hover {
+  background: #1a6144;
+  box-shadow: 0 4px 12px rgba(20, 77, 55, 0.6);
+}
+
+/* Botão simples de chamado nas mensagens */
+.ti-simple-ticket-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--ti-accent);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  transition: all 0.2s ease;
+  opacity: 0;
+  transform: scale(0.8);
+  pointer-events: none;
+  z-index: 10;
+}
+
+[data-ti-action]:hover .ti-simple-ticket-btn {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.ti-simple-ticket-btn:hover {
+  transform: scale(1.15) !important;
+  box-shadow: 0 4px 12px rgba(0, 168, 132, 0.4);
+}
+
+.ti-simple-ticket-btn:active {
+  transform: scale(0.95) !important;
+}
+
+body[data-theme="dark"] .ti-simple-ticket-btn {
+  background: #144D37;
+  box-shadow: 0 2px 8px rgba(20, 77, 55, 0.55);
+}
+
+body[data-theme="dark"] .ti-simple-ticket-btn:hover {
+  background: #1a6144;
+  box-shadow: 0 4px 12px rgba(20, 77, 55, 0.6);
+}
+
+/* Botão nativo na barra de ações da mensagem */
+.ti-native-ticket-btn {
+  transition: all 0.2s ease !important;
+}
+
+.ti-native-ticket-btn:hover {
+  background-color: var(--ti-hover-bg) !important;
+  transform: scale(1.1) !important;
+}
+
+.ti-native-ticket-btn:active {
+  transform: scale(0.95) !important;
+}
+
+/* Menu contextual customizado */
+.ti-context-menu-item {
+  transition: background-color 0.15s ease;
+}
+
+.ti-context-menu-item:hover {
+  background-color: var(--ti-hover-bg) !important;
+}
+
+.ti-context-menu-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ti-context-menu-label::before {
+  content: '🎫';
+  font-size: 16px;
+}
+
+/* ============================================
+   🎨 WhatsApp Support Panel - TEMA CLARO E ESCURO
+   Estilo idêntico ao WhatsApp Web
+   ============================================ */
+
+/* Variáveis de Tema - LIGHT MODE (padrão) */
+:root {
+  --ti-bg-primary: #f0f2f5;
+  --ti-bg-secondary: #ffffff;
+  --ti-bg-tertiary: #efeae2;
+  --ti-border-color: #d1d7db;
+  --ti-text-primary: #111b21;
+  --ti-text-secondary: #667781;
+  --ti-text-tertiary: #8696a0;
+  --ti-accent: #00a884;
+  --ti-accent-hover: #008f6f;
+  --ti-hover-bg: #f5f6f6;
+  --ti-shadow: rgba(0, 0, 0, 0.08);
+}
+
+/* Variáveis de Tema - DARK MODE */
+html[data-theme="dark"],
+body[data-theme="dark"],
+.dark,
+[data-color-scheme="dark"] {
+  --ti-bg-primary: #161717;
+  --ti-bg-secondary: #1f2020;
+  --ti-bg-tertiary: #0d0e0e;
+  --ti-border-color: #2d2e2e;
+  --ti-text-primary: #e9edef;
+  --ti-text-secondary: #8696a0;
+  --ti-text-tertiary: #667781;
+  --ti-accent: #144D37;
+  --ti-accent-hover: #1a6144;
+  --ti-hover-bg: #252626;
+  --ti-shadow: rgba(0, 0, 0, 0.4);
+}
+
+/* Reset & Base Styles */
+.ti-support-panel * {
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Helvetica Neue, Helvetica, Arial, sans-serif;
+}
+
+/* Painel Principal - FIXO LATERAL (estilo WhatsApp) */
+.ti-support-panel {
+  width: 400px;
+  height: 100vh;
+  background: var(--ti-bg-primary);
+  border-left: 1px solid var(--ti-border-color);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 100;
+  box-shadow: none;
+  transition: none;
+}
+
+.ti-support-panel.hidden {
+  display: none;
+}
+
+/* Header do Painel - ESTILO WHATSAPP NATIVO */
+.ti-panel-header {
+  background: var(--ti-bg-primary);
+  color: var(--ti-text-primary);
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: none;
+  border-bottom: 1px solid var(--ti-border-color);
+  min-height: 59px;
+}
+
+.ti-panel-header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ti-text-primary);
+}
+
+.ti-icon {
+  fill: var(--ti-accent);
+}
+
+/* Botões - ESTILO WHATSAPP NATIVO */
+.ti-btn-icon {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ti-text-secondary);
+  transition: background-color 0.2s ease;
+}
+
+.ti-btn-icon:hover {
+  background-color: var(--ti-hover-bg);
+}
+
+.ti-btn-icon:active {
+  background-color: var(--ti-border-color);
+}
+
+.ti-btn {
+  border: none;
+  padding: 12px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px var(--ti-shadow);
+  letter-spacing: 0.2px;
+}
+
+.ti-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px var(--ti-shadow);
+}
+
+.ti-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px var(--ti-shadow);
+}
+
+.ti-btn-primary {
+  background: var(--ti-accent);
+  color: white;
+  border: 1px solid transparent;
+}
+
+.ti-btn-primary:hover {
+  background: var(--ti-accent-hover);
+}
+
+.ti-btn-secondary {
+  background: var(--ti-bg-secondary);
+  color: var(--ti-text-primary);
+  border: 1px solid var(--ti-border-color);
+}
+
+.ti-btn-secondary:hover {
+  background: var(--ti-hover-bg);
+}
+
+.ti-btn-small {
+  padding: 8px 14px;
+  font-size: 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background: white;
+  color: #374151;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 600;
+  border: 1px solid #e5e7eb;
+  letter-spacing: 0.2px;
+}
+
+.ti-btn-small:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.ti-btn-view {
+  background: linear-gradient(135deg, #00a884 0%, #00c896 100%);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.ti-btn-view:hover {
+  background: linear-gradient(135deg, #008f6f 0%, #00a884 100%);
+  box-shadow: 0 4px 8px rgba(0, 168, 132, 0.3);
+}
+
+.ti-btn-comment {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.ti-btn-comment:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.ti-btn-close {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.ti-btn-close:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+/* Conteúdo do Painel - ESTILO WHATSAPP */
+.ti-panel-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px;
+  background: var(--ti-bg-tertiary);
+}
+
+/* Informações do Contato - Design Card Moderno */
+.ti-contact-info {
+  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 168, 132, 0.1);
+  border-left: 4px solid #00a884;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.ti-contact-info.hidden {
+  display: none;
+}
+
+.ti-contact-name {
+  font-weight: 700;
+  font-size: 17px;
+  color: #111827;
+  margin-bottom: 6px;
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ti-contact-name::before {
+  content: '👤';
+  font-size: 16px;
+}
+
+.ti-contact-phone {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ti-contact-phone::before {
+  content: '📞';
+  font-size: 13px;
+}
+
+body[data-theme="dark"] .ti-contact-info {
+  background: linear-gradient(135deg, #1f2020 0%, #161717 100%);
+  border: 1px solid rgba(20, 77, 55, 0.25);
+  border-left: 4px solid #144D37;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+body[data-theme="dark"] .ti-contact-name {
+  color: var(--ti-text-primary);
+}
+
+body[data-theme="dark"] .ti-contact-phone {
+  color: var(--ti-text-secondary);
+}
+
+.ti-ticket-context {
+  background: var(--ti-bg-secondary);
+  border: 1px dashed rgba(0, 168, 132, 0.25);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+body[data-theme="dark"] .ti-ticket-context {
+  background: rgba(31, 32, 32, 0.8);
+  border-color: rgba(20, 77, 55, 0.45);
+}
+
+.ti-context-badge {
+  align-self: flex-start;
+  background: rgba(0, 168, 132, 0.12);
+  color: var(--ti-accent);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+body[data-theme="dark"] .ti-context-badge {
+  background: rgba(20, 77, 55, 0.35);
+  color: #d9f5e4;
+}
+
+.ti-ticket-context-contact strong {
+  font-size: 15px;
+  color: var(--ti-text-primary);
+}
+
+.ti-ticket-context-contact .ti-context-phone {
+  font-size: 13px;
+  color: var(--ti-text-secondary);
+}
+
+.ti-ticket-context-message {
+  background: var(--ti-bg-tertiary);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 13px;
+  color: var(--ti-text-secondary);
+  line-height: 1.6;
+  border: 1px solid rgba(0, 168, 132, 0.15);
+}
+
+body[data-theme="dark"] .ti-ticket-context-message {
+  background: #1f2020;
+  border-color: rgba(20, 77, 55, 0.35);
+  color: var(--ti-text-secondary);
+}
+
+.ti-ticket-context-message p {
+  margin: 0;
+}
+
+.ti-message-has-action {
+  position: relative;
+}
+
+.ti-message-action-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--ti-accent);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  opacity: 0;
+  transform: scale(0.9);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.ti-message-has-action:hover .ti-message-action-btn,
+.ti-message-has-action:focus-within .ti-message-action-btn {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.ti-message-action-btn:hover {
+  box-shadow: 0 4px 12px rgba(0, 168, 132, 0.35);
+}
+
+body[data-theme="dark"] .ti-message-action-btn {
+  background: #144D37;
+  box-shadow: 0 2px 8px rgba(20, 77, 55, 0.55);
+}
+
+body[data-theme="dark"] .ti-message-action-btn:hover {
+  background: #1a6144;
+  box-shadow: 0 4px 12px rgba(20, 77, 55, 0.6);
+}
+
+/* Ações - Botões de Ação Principal */
+.ti-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.ti-actions .ti-btn {
+  flex: 1;
+  font-size: 13px;
+  padding: 14px 18px;
+}
+
+/* Lista de Chamados - Grid Moderno */
+.ti-tickets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: fadeIn 0.4s ease;
+}
+
+.ti-loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--ti-text-secondary);
+  font-size: 15px;
+  font-weight: 500;
+  background: var(--ti-bg-secondary);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px var(--ti-shadow);
+  animation: fadeIn 0.3s ease;
+}
+
+.ti-empty {
+  text-align: center;
+  padding: 60px 30px;
+  color: var(--ti-text-secondary);
+  font-size: 15px;
+  font-weight: 500;
+  background: var(--ti-bg-secondary);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px var(--ti-shadow);
+  animation: fadeIn 0.3s ease;
+}
+
+.ti-empty svg {
+  margin-bottom: 16px;
+  opacity: 0.4;
+}
+
+/* Estado vazio (nenhuma conversa selecionada) */
+.ti-empty-state {
+  text-align: center;
+  padding: 80px 30px;
+  color: var(--ti-text-secondary);
+  animation: fadeIn 0.3s ease;
+}
+
+.ti-empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.3;
+}
+
+.ti-empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ti-text-primary);
+  margin-bottom: 8px;
+}
+
+.ti-empty-message {
+  font-size: 14px;
+  color: var(--ti-text-secondary);
+  line-height: 1.5;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ti-error {
+  background-color: #fff5f5;
+  border: 1px solid #fc8181;
+  padding: 16px;
+  border-radius: 8px;
+  color: #c53030;
+}
+
+.ti-error p {
+  margin: 0 0 8px 0;
+  font-weight: 500;
+}
+
+.ti-error small {
+  font-size: 12px;
+}
+
+.ti-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #667781;
+}
+
+/* Card de Chamado - Estilo Premium */
+.ti-ticket-card {
+  background: var(--ti-bg-secondary);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px var(--ti-shadow), 0 1px 2px var(--ti-shadow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid var(--ti-border-color);
+  position: relative;
+  overflow: hidden;
+}
+
+.ti-ticket-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #00a884 0%, #00c896 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.ti-ticket-card:hover {
+  box-shadow: 0 8px 24px var(--ti-shadow), 0 2px 6px var(--ti-shadow);
+  transform: translateY(-2px);
+  border-color: var(--ti-accent);
+}
+
+.ti-ticket-card:hover::before {
+  opacity: 1;
+}
+
+.ti-ticket-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.ti-ticket-id {
+  font-weight: 700;
+  color: var(--ti-text-primary);
+  font-size: 15px;
+  letter-spacing: -0.3px;
+}
+
+.ti-ticket-status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.ti-status-open {
+  background: #3b82f6;
+  color: white;
+}
+
+.ti-status-in_progress {
+  background: #f59e0b;
+  color: white;
+}
+
+.ti-status-pending,
+.ti-status-paused {
+  background: #8b5cf6;
+  color: white;
+}
+
+.ti-status-closed {
+  background: #6b7280;
+  color: white;
+}
+
+/* Ajustes para modo escuro */
+body[data-theme="dark"] .ti-status-open {
+  background: #2563eb;
+}
+
+body[data-theme="dark"] .ti-status-in_progress {
+  background: #d97706;
+}
+
+body[data-theme="dark"] .ti-status-pending,
+body[data-theme="dark"] .ti-status-paused {
+  background: #7c3aed;
+}
+
+body[data-theme="dark"] .ti-status-closed {
+  background: #4b5563;
+}
+
+.ti-ticket-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ti-text-primary);
+  margin-bottom: 10px;
+  line-height: 1.5;
+  display: -webkit-box;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ti-ticket-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: var(--ti-text-secondary);
+  margin-bottom: 14px;
+  gap: 8px;
+}
+
+.ti-ticket-meta span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ti-priority {
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.ti-priority-low {
+  background: #10b981;
+  color: white;
+}
+
+.ti-priority-medium {
+  background: #f59e0b;
+  color: white;
+}
+
+.ti-priority-high {
+  background: #ef4444;
+  color: white;
+}
+
+.ti-priority-urgent {
+  background: #dc2626;
+  color: white;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Ajustes para modo escuro */
+body[data-theme="dark"] .ti-priority-low {
+  background: #059669;
+}
+
+body[data-theme="dark"] .ti-priority-medium {
+  background: #d97706;
+}
+
+body[data-theme="dark"] .ti-priority-high {
+  background: #dc2626;
+}
+
+body[data-theme="dark"] .ti-priority-urgent {
+  background: #991b1b;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+.ti-ticket-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+
+/* Detalhes do chamado */
+.ti-ticket-details {
+  background-color: white;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.ti-ticket-details.hidden {
+  display: none;
+}
+
+.ti-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e9edef;
+}
+
+.ti-detail-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #111b21;
+}
+
+.ti-detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ti-detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ti-detail-row label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #667781;
+  text-transform: uppercase;
+}
+
+.ti-detail-row span,
+.ti-detail-row p {
+  font-size: 14px;
+  color: #111b21;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Comentários */
+.ti-comments {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e9edef;
+}
+
+.ti-comments h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #111b21;
+}
+
+.ti-comment {
+  background-color: #f7f8fa;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.ti-comment-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.ti-comment-header strong {
+  color: #111b21;
+}
+
+.ti-comment-header span {
+  color: #667781;
+}
+
+.ti-comment p {
+  margin: 0;
+  font-size: 13px;
+  color: #111b21;
+  line-height: 1.4;
+}
+
+.ti-no-comments {
+  text-align: center;
+  padding: 20px;
+  color: #667781;
+  font-size: 13px;
+}
+
+/* Formulário de comentário */
+.ti-comment-form {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e9edef;
+}
+
+.ti-comment-form textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #d1d7db;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  resize: vertical;
+  margin-bottom: 8px;
+}
+
+.ti-comment-form textarea:focus {
+  outline: none;
+  border-color: #00a884;
+}
+
+/* Formulário */
+.ti-form {
+  background-color: white;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.ti-form h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  color: #111b21;
+}
+
+.ti-form-group {
+  margin-bottom: 16px;
+}
+
+.ti-form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #54656f;
+}
+
+.ti-form-group input,
+.ti-form-group textarea,
+.ti-form-group select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #d1d7db;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.ti-form-group input:focus,
+.ti-form-group textarea:focus,
+.ti-form-group select:focus {
+  outline: none;
+  border-color: #00a884;
+}
+
+.ti-form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.ti-form-actions .ti-btn {
+  flex: 1;
+}
+
+/* Botão na Toolbar do WhatsApp - Destaque Moderno */
+.ti-toolbar-button {
+  display: inline-flex;
+  margin-right: 12px;
+  position: relative;
+  animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes bounceIn {
+  0% { opacity: 0; transform: scale(0.3); }
+  50% { opacity: 1; transform: scale(1.05); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+.ti-toolbar-button .ti-btn-icon {
+  color: white !important;
+  background: linear-gradient(135deg, #00a884 0%, #00c896 100%) !important;
+  box-shadow: 0 4px 12px rgba(0, 168, 132, 0.4) !important;
+  width: 42px !important;
+  height: 42px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.ti-toolbar-button .ti-btn-icon:hover {
+  background: linear-gradient(135deg, #008f6f 0%, #00a884 100%) !important;
+  transform: scale(1.08) rotate(5deg) !important;
+  box-shadow: 0 6px 20px rgba(0, 168, 132, 0.5) !important;
+}
+
+.ti-toolbar-button .ti-btn-icon:active {
+  transform: scale(0.95) !important;
+}
+
+/* Toast de Notificação - Design Premium */
+.ti-toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(150px);
+  padding: 16px 28px;
+  border-radius: 12px;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  z-index: 10000;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 280px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.ti-toast-show {
+  transform: translateX(-50%) translateY(0);
+  animation: toastSlide 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes toastSlide {
+  0% { opacity: 0; transform: translateX(-50%) translateY(150px) scale(0.9); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+.ti-toast-success {
+  background: linear-gradient(135deg, #00a884 0%, #00c896 100%);
+  box-shadow: 0 8px 32px rgba(0, 168, 132, 0.4);
+}
+
+.ti-toast-error {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 8px 32px rgba(239, 68, 68, 0.4);
+}
+
+.ti-toast-info {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.4);
+}
+
+/* Scrollbar - ESTILO WHATSAPP NATIVO */
+.ti-panel-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ti-panel-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ti-panel-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.ti-panel-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Botão Flutuante - Toggle do Painel */
+.ti-floating-toggle {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #00a884;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 168, 132, 0.4), 0 2px 4px rgba(0, 0, 0, 0.12);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10000;
+  color: white;
+}
+
+/* Botão no modo escuro */
+body[data-theme="dark"] .ti-floating-toggle {
+  background: #144D37;
+  box-shadow: 0 4px 12px rgba(20, 77, 55, 0.5), 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.ti-floating-toggle:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 6px 20px rgba(0, 168, 132, 0.5), 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+body[data-theme="dark"] .ti-floating-toggle:hover {
+  background: #1a6144;
+  box-shadow: 0 6px 20px rgba(20, 77, 55, 0.6), 0 3px 6px rgba(0, 0, 0, 0.25);
+}
+
+.ti-floating-toggle:active {
+  transform: scale(0.95);
+}
+
+/* Oculta o botão quando o painel está aberto */
+body:not(.ti-panel-hidden) .ti-floating-toggle {
+  right: 424px;
+}
+
+/* Responsividade */
+@media (max-width: 1200px) {
+  .ti-support-panel {
+    width: 400px;
+  }
+  
+  body:not(.ti-panel-hidden) #app {
+    margin-right: 400px !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .ti-support-panel {
+    width: 100%;
+    max-width: 400px;
+  }
+}

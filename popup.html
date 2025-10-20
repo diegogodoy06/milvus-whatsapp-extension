@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configurações - WhatsApp Suporte TI</title>
+  <style>
+    body {
+      width: 350px;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background-color: #f0f2f5;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #00a884 0%, #008f6f 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .header p {
+      margin: 5px 0 0;
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .content {
+      padding: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #54656f;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #d1d7db;
+      border-radius: 6px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #00a884;
+    }
+
+    .form-group small {
+      display: block;
+      margin-top: 4px;
+      font-size: 11px;
+      color: #667781;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background-color: #00a884;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .btn:hover {
+      background-color: #008f6f;
+    }
+
+    .btn:disabled {
+      background-color: #d1d7db;
+      cursor: not-allowed;
+    }
+
+    .status {
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .status.success {
+      background-color: #d1fae5;
+      color: #065f46;
+    }
+
+    .status.error {
+      background-color: #fee;
+      color: #c53030;
+    }
+
+    .info-box {
+      background-color: white;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 16px;
+      font-size: 12px;
+      color: #54656f;
+      line-height: 1.6;
+    }
+
+    .info-box h3 {
+      margin: 0 0 8px 0;
+      font-size: 13px;
+      color: #111b21;
+    }
+
+    .info-box ul {
+      margin: 8px 0;
+      padding-left: 20px;
+    }
+
+    .info-box li {
+      margin-bottom: 4px;
+    }
+
+    .divider {
+      height: 1px;
+      background-color: #e9edef;
+      margin: 16px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>⚙️ Configurações</h1>
+    <p>WhatsApp Suporte TI</p>
+  </div>
+
+  <div class="content">
+    <form id="configForm">
+      <div class="form-group">
+        <label for="apiToken">🔑 Token de Autenticação</label>
+        <input 
+          type="text" 
+          id="apiToken" 
+          placeholder="Cole seu token aqui"
+          required
+        />
+        <small>Token gerado no <a href="https://portal.milvus.com.br" target="_blank">Portal Milvus</a></small>
+      </div>
+
+      <div class="form-group">
+        <label for="geminiKey">🤖 Gemini API Key (opcional)</label>
+        <input
+          type="text"
+          id="geminiKey"
+          placeholder="Cole sua chave da Gemini API"
+        />
+        <small>Utilizada para sugerir assunto e descrição ao criar chamados a partir de mensagens</small>
+      </div>
+
+      <button type="submit" class="btn" id="saveBtn">
+        💾 Salvar Token
+      </button>
+    </form>
+
+    <div id="status" class="status" style="display: none;"></div>
+
+    <div class="divider"></div>
+
+    <div class="info-box">
+      <h3>📋 Como usar:</h3>
+      <ul>
+        <li><strong>1.</strong> Gere seu token no <a href="https://portal.milvus.com.br" target="_blank">Portal Milvus</a></li>
+        <li><strong>2.</strong> Cole o token acima e clique em "Salvar"</li>
+        <li><strong>3.</strong> Acesse <a href="https://web.whatsapp.com" target="_blank">WhatsApp Web</a></li>
+        <li><strong>4.</strong> Abra uma conversa com um cliente</li>
+        <li><strong>5.</strong> Clique no ícone 🎫 no cabeçalho</li>
+        <li><strong>6.</strong> Gerencie os chamados!</li>
+      </ul>
+    </div>
+
+    <div class="info-box">
+      <h3>🔌 API Milvus Integrada</h3>
+      <p style="margin: 4px 0 8px; font-size: 11px; color: #667781;">
+        <strong>URL:</strong> https://apiintegracao.milvus.com.br/api
+      </p>
+      <ul style="font-size: 11px;">
+        <li>Listar chamados</li>
+        <li>Criar novo chamado</li>
+        <li>Ver detalhes completos</li>
+        <li>Adicionar acompanhamentos</li>
+        <li>Finalizar chamados</li>
+      </ul>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
