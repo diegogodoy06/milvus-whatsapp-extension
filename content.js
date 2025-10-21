@@ -6,6 +6,64 @@ let API_BASE_URL = 'https://apiintegracao.milvus.com.br/api'; // URL da API Milv
 let API_TOKEN = ''; // Token de autenticação
 let GEMINI_API_KEY = '';
 
+// Mapeamento de Categorias do Milvus (Categoria Primária | Categoria Secundária : ID)
+const MILVUS_CATEGORIES = {
+  'Acessos': '157982',
+  'Acessos | Liberação Portões Estoque': '631701',
+  'Acessos | Recuperação de senha': '631422',
+  'Acessos | Liberação de Sites / Firewall': '631421',
+  'Acessos | Liberação de acesso Outros': '631419',
+  'Acessos | Liberação de acesso Alarme': '631417',
+  'Acessos | Remoção de Acessos': '563653',
+  'Acessos | Liberação de funções ERP': '563543',
+  'Acessos | Liberação de acesso Pastas (NAS)': '562350',
+  'Acessos | Novo colaborador / Cadastro de funcionário': '562349',
+  'Backup': '157479',
+  'Backup | Execução': '631424',
+  'Backup | Restore Execução': '561052',
+  'Backup | Corrompido': '559948',
+  'Backup | Não rodou': '559947',
+  'Gerencial': '157749',
+  'Gerencial | Prestação de contas': '631425',
+  'Gerencial | Relatórios gerenciais / Saída': '561068',
+  'Gerencial | Procedimento Operacional': '561063',
+  'Gerencial | Torno CNC / Prorrogar expiração mensal': '561061',
+  'Hardware': '157480',
+  'Hardware | Outros tipos de aprovações': '631595',
+  'Hardware | Configuração inicial': '631426',
+  'Hardware | Mudança física': '621634',
+  'Hardware | Passagem de cabos': '580941',
+  'Hardware | Computador Não liga': '561075',
+  'Hardware | Mouse / Teclado / Monitor / Outros': '561074',
+  'Hardware | Limpeza': '559950',
+  'Hardware | Troca de peça': '559949',
+  'Impressoras': '159289',
+  'Impressoras | Outros Problemas de impressão': '631427',
+  'Impressoras | Suprimentos / Troca de Tonner': '567350',
+  'Impressoras | Manutenção': '567349',
+  'Impressoras | Instalação': '567348',
+  'Servidor': '157482',
+  'Servidor | Servidor NAS': '561090',
+  'Servidor | Servidor Windows': '561086',
+  'Servidor | Outros servidores / Virtualização': '559955',
+  'Software': '157481',
+  'Software | Instalação / Configuração / Remoção': '631443',
+  'Software | Formatação': '563670',
+  'Software | SolidWorks': '561114',
+  'Software | Adobe / Corel': '561111',
+  'Software | Sistema Operacional Problemas': '561107',
+  'Software | Contratar software / licença': '561103',
+  'Software | ERP Ajuste / Parametrização': '559953',
+  'Software | ERP Erro no sistema': '559951',
+  'Telefonia': '157751',
+  'Telefonia | Relatórios': '633559',
+  'Telefonia | Problema com Aparelho': '631428',
+  'Telefonia | Ramal Problema': '561126',
+  'Telefonia | Ramal Configurar / Instalar': '561125',
+  'Telefonia | Problema linha móvel / chip': '561123',
+  'Telefonia | Contratar Ramal / Linha / Linha Móvel': '561122'
+};
+
 // Carrega configurações salvas
 chrome.storage.sync.get(['apiBaseUrl', 'apiToken', 'geminiApiKey'], (result) => {
   if (result.apiBaseUrl) {
@@ -642,6 +700,9 @@ class WhatsAppSupportExtension {
         contactName: this.currentContact,
         contactPhone: this.currentPhone,
         originalMessage: messageText,
+        categoryId: suggestion.categoryId,
+        primaryCategory: suggestion.primaryCategory,
+        secondaryCategory: suggestion.secondaryCategory,
         source: suggestion.source || 'gemini'
       });
     } catch (error) {
@@ -663,7 +724,27 @@ class WhatsAppSupportExtension {
     const sanitizedMessage = messageText.trim().slice(0, 4000);
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
 
-    const prompt = `Você é um analista de suporte técnico. Gere um título curto (até 80 caracteres) e uma descrição detalhada para abrir um chamado de suporte em português. Responda APENAS em JSON com o formato {"title":"...","description":"..."}. Use um tom profissional e claro. Mensagem do usuário: """${sanitizedMessage}"""`;
+    // Lista de categorias disponíveis para o Gemini escolher
+    const categoriesText = Object.keys(MILVUS_CATEGORIES).join('\n- ');
+
+    const prompt = `Você é um analista de suporte técnico. Analise a mensagem e:
+1. Gere um título curto (até 80 caracteres)
+2. Crie uma descrição detalhada
+3. ESCOLHA a categoria mais adequada desta lista (use EXATAMENTE como está escrito):
+
+CATEGORIAS DISPONÍVEIS:
+- ${categoriesText}
+
+Responda APENAS em JSON com o formato:
+{
+  "title": "...",
+  "description": "...",
+  "category": "categoria exata da lista"
+}
+
+Use um tom profissional e claro em português.
+
+Mensagem do usuário: """${sanitizedMessage}"""`;
 
     const payload = {
       contents: [
@@ -703,6 +784,8 @@ class WhatsAppSupportExtension {
       return {
         title: '',
         description: sanitizedMessage,
+        category: null,
+        categoryId: null,
         notice: 'Não foi possível gerar sugestão automática. Mensagem original carregada.',
         source: 'gemini'
       };
@@ -716,9 +799,32 @@ class WhatsAppSupportExtension {
 
     try {
       const parsed = JSON.parse(cleaned);
+      
+      // Extrai categoria primária e secundária
+      let categoryId = null;
+      let primaryCategory = null;
+      let secondaryCategory = null;
+      
+      if (parsed.category && MILVUS_CATEGORIES[parsed.category]) {
+        categoryId = MILVUS_CATEGORIES[parsed.category];
+        
+        // Separa categoria primária | secundária
+        if (parsed.category.includes(' | ')) {
+          const parts = parsed.category.split(' | ');
+          primaryCategory = parts[0].trim();
+          secondaryCategory = parts[1].trim();
+        } else {
+          primaryCategory = parsed.category;
+        }
+      }
+      
       return {
         title: typeof parsed.title === 'string' ? parsed.title.trim() : '',
         description: typeof parsed.description === 'string' ? parsed.description.trim() : sanitizedMessage,
+        category: parsed.category,
+        categoryId: categoryId,
+        primaryCategory: primaryCategory,
+        secondaryCategory: secondaryCategory,
         source: 'gemini'
       };
     } catch (error) {
@@ -726,6 +832,8 @@ class WhatsAppSupportExtension {
       return {
         title: '',
         description: sanitizedMessage,
+        category: null,
+        categoryId: null,
         notice: 'Sugestão recebida em formato inesperado. Mensagem original carregada.',
         source: 'gemini'
       };
@@ -1365,9 +1473,6 @@ class WhatsAppSupportExtension {
         console.log('📭 Renderizando estado vazio para:', cleanPhone);
         listDiv.innerHTML = `
           <div class="ti-empty">
-            <svg viewBox="0 0 24 24" width="48" height="48" style="opacity: 0.3; margin-bottom: 12px;">
-              <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-            </svg>
             <p style="margin: 0; font-size: 14px; color: #667781;">Nenhum chamado em aberto</p>
             <small style="color: #8696a0; margin-top: 4px;">${this.currentContact ? `Contato: ${this.currentContact}` : `Telefone: ${cleanPhone}`}</small>
           </div>
@@ -1590,7 +1695,7 @@ class WhatsAppSupportExtension {
     ` : '';
 
     const badgeHtml = suggestionSource === 'gemini' ? `
-      <span class="ti-context-badge">Sugestão gerada pela Gemini</span>
+      <span class="ti-context-badge">✨ Sugestão gerada pela Gemini (título, descrição e categorias)</span>
     ` : '';
 
     listDiv.innerHTML = `
@@ -1637,12 +1742,40 @@ class WhatsAppSupportExtension {
     const titleInput = document.getElementById('ti-ticket-title');
     if (titleInput) {
       titleInput.value = prefill.title ?? '';
+      if (prefill.title && suggestionSource === 'gemini') {
+        titleInput.classList.add('ti-ai-filled');
+      }
     }
 
     const descriptionInput = document.getElementById('ti-ticket-description');
     if (descriptionInput) {
       const descriptionValue = prefill.description ?? (originalMessage || '');
       descriptionInput.value = descriptionValue;
+      if (prefill.description && suggestionSource === 'gemini') {
+        descriptionInput.classList.add('ti-ai-filled');
+      }
+    }
+
+    // Preenche categorias se foram sugeridas pela IA
+    const cat1Input = document.getElementById('ti-ticket-cat1');
+    if (cat1Input && prefill.primaryCategory) {
+      cat1Input.value = prefill.primaryCategory;
+      cat1Input.classList.add('ti-ai-filled');
+    }
+
+    const cat2Input = document.getElementById('ti-ticket-cat2');
+    if (cat2Input && prefill.secondaryCategory) {
+      cat2Input.value = prefill.secondaryCategory;
+      cat2Input.classList.add('ti-ai-filled');
+    }
+
+    // Se temos category ID, mostra nos logs
+    if (prefill.categoryId) {
+      console.log('🏷️ Categoria sugerida pela IA:', {
+        id: prefill.categoryId,
+        primaria: prefill.primaryCategory,
+        secundaria: prefill.secondaryCategory
+      });
     }
 
     setTimeout(() => {
