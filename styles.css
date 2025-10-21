@@ -1008,6 +1008,50 @@ body[data-theme="dark"] .ti-priority-urgent {
   border-color: #00a884;
 }
 
+.ti-comment-form textarea.ti-ai-filled {
+  background: linear-gradient(to right, rgba(0, 168, 132, 0.05) 0%, transparent 100%);
+  border-left: 3px solid rgba(0, 168, 132, 0.4);
+  padding-left: 12px;
+}
+
+body[data-theme="dark"] .ti-comment-form textarea.ti-ai-filled {
+  background: linear-gradient(to right, rgba(20, 77, 55, 0.15) 0%, transparent 100%);
+  border-left-color: rgba(20, 77, 55, 0.6);
+}
+
+.ti-comment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.ti-btn-gemini {
+  background: linear-gradient(135deg, #f0fdf8 0%, #dcfce7 100%);
+  color: #047857;
+  border: 1px solid rgba(4, 120, 87, 0.25);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ti-btn-gemini:hover {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  border-color: rgba(4, 120, 87, 0.45);
+  color: #065f46;
+}
+
+body[data-theme="dark"] .ti-btn-gemini {
+  background: rgba(20, 77, 55, 0.3);
+  color: #a7f3d0;
+  border-color: rgba(20, 77, 55, 0.6);
+}
+
+body[data-theme="dark"] .ti-btn-gemini:hover {
+  background: rgba(20, 77, 55, 0.45);
+  color: #d1fae5;
+}
+
 /* Formulário */
 .ti-form {
   background-color: white;
@@ -1140,6 +1184,12 @@ body[data-theme="dark"] .ti-priority-urgent {
 .ti-toast-info {
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   box-shadow: 0 8px 32px rgba(59, 130, 246, 0.4);
+}
+
+.ti-toast-warning {
+  background: linear-gradient(135deg, #facc15 0%, #f97316 100%);
+  color: #3b2f04;
+  box-shadow: 0 8px 32px rgba(250, 204, 21, 0.35);
 }
 
 /* Scrollbar - ESTILO WHATSAPP NATIVO */

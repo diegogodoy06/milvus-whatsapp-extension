@@ -840,6 +840,79 @@ Mensagem do usuário: """${sanitizedMessage}"""`;
     }
   }
 
+  async generateCommentRefinement(originalComment, context = {}) {
+    const sanitizedComment = originalComment.trim().slice(0, 4000);
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
+
+    const ticketInfo = context.ticketId ? `#${context.ticketId}` : 'desconhecido';
+    const contactInfo = context.contactName ? context.contactName : (context.contactPhone || 'Contato não identificado');
+
+    const prompt = `Atue como um analista de suporte técnico experiente. Reescreva o comentário abaixo em português, mantendo todas as informações essenciais, mas deixando o texto claro, objetivo e profissional. Não inclua saudações nem repita informações já implícitas. Se faltar contexto, apenas organize melhor o que já existe.
+
+Contexto:
+- Chamado: ${ticketInfo}
+- Contato: ${contactInfo}
+
+Comente somente o necessário para registrar o andamento ou comunicação com o cliente.
+
+Retorne APENAS em JSON com o formato {"comment":"texto refinado"}.
+
+Comentário original: """${sanitizedComment}"""`;
+
+    const payload = {
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: prompt }
+          ]
+        }
+      ],
+      generationConfig: {
+        temperature: 0.3,
+        topP: 0.9,
+        maxOutputTokens: 256
+      }
+    };
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const errorMessage = data?.error?.message || 'Erro desconhecido na Gemini API';
+      throw new Error(errorMessage);
+    }
+
+    const parts = data?.candidates?.[0]?.content?.parts || [];
+    const combinedText = parts.map(part => part.text).filter(Boolean).join('\n').trim();
+
+    if (!combinedText) {
+      return sanitizedComment;
+    }
+
+    const cleaned = combinedText
+      .replace(/^```json/i, '')
+      .replace(/^```/i, '')
+      .replace(/```$/i, '')
+      .trim();
+
+    try {
+      const parsed = JSON.parse(cleaned);
+      const refined = typeof parsed.comment === 'string' ? parsed.comment.trim() : '';
+      return refined || sanitizedComment;
+    } catch (error) {
+      console.warn('Não foi possível interpretar resposta da Gemini para comentário. Texto bruto:', combinedText);
+      return sanitizedComment;
+    }
+  }
+
   addToolbarButton() {
     console.log('🔘 Tentando adicionar botão no toolbar...');
     
@@ -1852,7 +1925,8 @@ Mensagem do usuário: """${sanitizedMessage}"""`;
     form.className = 'ti-comment-form';
     form.innerHTML = `
       <textarea placeholder="Adicionar comentário..." rows="3"></textarea>
-      <div class="ti-form-actions">
+      <div class="ti-form-actions ti-comment-actions">
+        <button type="button" class="ti-btn-small ti-btn-gemini" title="Refinar comentário com ajuda da IA">✨ Refinar com Gemini</button>
         <button class="ti-btn-small ti-btn-primary">Enviar</button>
         <button class="ti-btn-small ti-btn-secondary">Cancelar</button>
       </div>
@@ -1861,8 +1935,54 @@ Mensagem do usuário: """${sanitizedMessage}"""`;
     card.appendChild(form);
 
     const textarea = form.querySelector('textarea');
+    const btnGemini = form.querySelector('.ti-btn-gemini');
     const btnSend = form.querySelector('.ti-btn-primary');
     const btnCancel = form.querySelector('.ti-btn-secondary');
+
+    textarea?.addEventListener('input', () => {
+      textarea.classList.remove('ti-ai-filled');
+    });
+
+    btnGemini?.addEventListener('click', async () => {
+      const originalText = textarea.value.trim();
+
+      if (!originalText) {
+        this.showMessage('Digite algo antes de pedir ajuda à Gemini.', 'warning');
+        textarea.focus();
+        return;
+      }
+
+      if (!GEMINI_API_KEY) {
+        this.showMessage('Configure a chave da Gemini API nas configurações.', 'error');
+        return;
+      }
+
+      btnGemini.disabled = true;
+      const previousLabel = btnGemini.textContent;
+      btnGemini.textContent = '⏳ Refinando...';
+
+      try {
+        const refined = await this.generateCommentRefinement(originalText, {
+          ticketId,
+          contactName: this.currentContact,
+          contactPhone: this.currentPhone
+        });
+
+        if (refined) {
+          textarea.value = refined;
+          textarea.classList.add('ti-ai-filled');
+          this.showMessage('Comentário refinado pela Gemini. Revise antes de enviar.', 'success');
+        } else {
+          this.showMessage('A Gemini não conseguiu melhorar este comentário.', 'warning');
+        }
+      } catch (error) {
+        console.error('Erro ao refinar comentário com Gemini:', error);
+        this.showMessage('Não foi possível refinar o comentário agora.', 'error');
+      } finally {
+        btnGemini.disabled = false;
+        btnGemini.textContent = previousLabel;
+      }
+    });
 
     btnSend.addEventListener('click', async () => {
       const comment = textarea.value.trim();
