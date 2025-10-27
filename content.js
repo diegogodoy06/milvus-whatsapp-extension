@@ -651,7 +651,7 @@ class WhatsAppSupportExtension {
 
     if (parts.length === 0) {
       const clone = messageElement.cloneNode(true);
-      clone.querySelectorAll('.ti-message-action-btn').forEach(btn => btn.remove());
+      clone.querySelectorAll('.ti-message-action-btn, .ti-simple-ticket-btn').forEach(btn => btn.remove());
       const raw = clone.textContent?.trim() || '';
       if (!raw) return '';
 
@@ -665,8 +665,125 @@ class WhatsAppSupportExtension {
     return parts.join('\n').trim();
   }
 
+   getMessageDirection(messageElement) {
+     if (!messageElement || !messageElement.classList) return null;
+     const classTokens = Array.from(messageElement.classList);
+
+     if (classTokens.some(cls => cls.includes('message-out'))) {
+       return 'out';
+     }
+     if (classTokens.some(cls => cls.includes('message-in'))) {
+       return 'in';
+     }
+
+     const prePlain = messageElement.getAttribute?.('data-pre-plain-text') || '';
+     if (prePlain.includes('Você:')) {
+       return 'out';
+     }
+     if (prePlain.length) {
+       return 'in';
+     }
+
+     return null;
+   }
+
+   isMessageBubble(element) {
+     if (!element) return false;
+
+     if (element.dataset?.prePlainText) {
+       return true;
+     }
+
+     const className = typeof element.className === 'string' ? element.className : '';
+    return className.includes('message');
+   }
+
+   collectContextualMessageText(messageElement, maxMessages = 3) {
+    if (!messageElement) return '';
+
+    const bubble = messageElement.matches?.('[data-pre-plain-text]')
+      ? messageElement
+      : (messageElement.closest?.('[data-pre-plain-text]') || messageElement);
+
+    const mainArea = bubble.closest?.('#main') ||
+                     bubble.closest?.('[role="main"]') ||
+                     document.querySelector('[data-testid="conversation-panel-messages"]') ||
+                     document.querySelector('[data-testid="conversation-panel-body"]') ||
+                     document.querySelector('#main') ||
+                     document.querySelector('[role="main"]');
+
+    if (!mainArea) {
+      return this.extractMessageTextFromBubble(bubble);
+    }
+
+    const allMessages = Array.from(mainArea.querySelectorAll('[data-pre-plain-text]'))
+      .filter(node => this.isMessageBubble(node));
+
+    if (!allMessages.length) {
+      return this.extractMessageTextFromBubble(bubble);
+    }
+
+    let index = allMessages.findIndex(node => node === bubble);
+    if (index === -1) {
+      index = allMessages.findIndex(node => node.contains(bubble));
+    }
+    if (index === -1) {
+      index = allMessages.findIndex(node => bubble.contains(node));
+    }
+
+    if (index === -1) {
+      return this.extractMessageTextFromBubble(bubble);
+    }
+
+    const targetDirection = this.getMessageDirection(bubble);
+    const collected = [];
+    const visited = new Set();
+
+    const addText = (el, position = 'end') => {
+      if (!el || visited.has(el)) {
+        return;
+      }
+      visited.add(el);
+
+      const text = this.extractMessageTextFromBubble(el);
+      if (!text) {
+        return;
+      }
+
+      if (position === 'start') {
+        collected.unshift(text);
+      } else {
+        collected.push(text);
+      }
+    };
+
+    addText(allMessages[index]);
+
+    for (let i = index - 1; i >= 0 && collected.length < maxMessages; i--) {
+      const candidate = allMessages[i];
+      const direction = this.getMessageDirection(candidate);
+      if (targetDirection && direction && direction !== targetDirection) {
+        break;
+      }
+
+      addText(candidate, 'start');
+    }
+
+    for (let i = index + 1; i < allMessages.length && collected.length < maxMessages; i++) {
+      const candidate = allMessages[i];
+      const direction = this.getMessageDirection(candidate);
+      if (targetDirection && direction && direction !== targetDirection) {
+        break;
+      }
+
+      addText(candidate, 'end');
+    }
+
+    return collected.join('\n\n').trim();
+   }
+
   async handleMessageTicket(messageElement) {
-    const messageText = this.extractMessageTextFromBubble(messageElement);
+    const messageText = this.collectContextualMessageText(messageElement);
 
     if (!messageText) {
       this.showMessage('Não foi possível capturar o texto da mensagem selecionada.', 'error');
