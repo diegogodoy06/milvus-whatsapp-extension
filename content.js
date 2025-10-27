@@ -1902,9 +1902,13 @@ Comentário original: """${sanitizedComment}"""`;
 
       if (!response.ok) throw new Error('Erro ao criar chamado');
 
-      const ticketCode = await response.text();
-      this.showMessage(`Chamado #${ticketCode} criado com sucesso!`, 'success');
-      await this.loadTickets();
+  const ticketCode = (await response.text()).trim();
+  this.showMessage(`Chamado #${ticketCode} criado com sucesso!`, 'success');
+
+  const subjectForMessage = (assunto ?? '').toString().trim();
+  await this.notifyContactTicketCreated(ticketCode, subjectForMessage);
+
+  await this.loadTickets();
     } catch (error) {
       console.error('Erro ao criar chamado:', error);
       this.showMessage('Erro ao criar chamado: ' + error.message, 'error');
@@ -2020,6 +2024,99 @@ Comentário original: """${sanitizedComment}"""`;
     } catch (error) {
       console.error('Erro ao adicionar acompanhamento:', error);
       this.showMessage('Erro ao adicionar acompanhamento', 'error');
+    }
+  }
+
+  async notifyContactTicketCreated(ticketCode, subject) {
+    if (!ticketCode) return;
+
+    const cleanSubject = subject?.length ? subject : 'Sem assunto informado';
+    const messageLines = [
+      'Chamado aberto! ✓',
+      `Ticket: *#${ticketCode}*`,
+      `_Assunto: ${cleanSubject}_`,
+      '',
+      'Qualquer novidade falo por aqui.'
+    ];
+
+    const message = messageLines.join('\n');
+    const sent = await this.sendWhatsAppMessageToCurrentChat(message);
+
+    if (!sent) {
+      this.showMessage('Chamado criado, mas não consegui enviar a confirmação no WhatsApp.', 'warning');
+    }
+  }
+
+  async sendWhatsAppMessageToCurrentChat(message) {
+    try {
+      if (!message?.trim()) {
+        return false;
+      }
+
+      const composer = document.querySelector('[contenteditable="true"][data-testid="conversation-compose-box-input"]') ||
+                       document.querySelector('#main footer div[contenteditable="true"]');
+
+      if (!composer) {
+        console.warn('✉️ Campo de mensagem do WhatsApp não encontrado para envio automático.');
+        return false;
+      }
+
+      composer.focus();
+
+      // Limpa conteúdo atual
+      document.execCommand('selectAll', false, null);
+      document.execCommand('delete', false, null);
+
+      const lines = message.split('\n');
+      let needsFallback = false;
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        if (line) {
+          const insertedText = document.execCommand('insertText', false, line);
+          if (!insertedText) {
+            needsFallback = true;
+            break;
+          }
+        }
+
+        if (i < lines.length - 1) {
+          const insertedBreak = document.execCommand('insertLineBreak', false, null) ||
+                                document.execCommand('insertParagraph', false, null);
+          if (!insertedBreak) {
+            needsFallback = true;
+            break;
+          }
+        }
+      }
+
+      if (needsFallback) {
+        const html = lines
+          .map(line => line ? this.escapeHTML(line) : '')
+          .join('<br>');
+        composer.innerHTML = html;
+      }
+
+      composer.dispatchEvent(new Event('input', { bubbles: true }));
+
+      await new Promise(resolve => setTimeout(resolve, 60));
+
+      const sendButton = document.querySelector('button[data-testid="compose-btn-send"]') ||
+                         document.querySelector('button[aria-label="Enviar"]') ||
+                         document.querySelector('[data-testid="compose-btn-send"]');
+
+      if (!sendButton) {
+        console.warn('🛑 Botão de enviar mensagem não encontrado.');
+        return false;
+      }
+
+      sendButton.click();
+      console.log('💬 Mensagem automática enviada ao contato.');
+      return true;
+    } catch (error) {
+      console.error('Erro ao enviar mensagem automática:', error);
+      return false;
     }
   }
 
