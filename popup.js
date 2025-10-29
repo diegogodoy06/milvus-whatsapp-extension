@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const geminiKeyInput = document.getElementById('geminiKey');
   const saveBtn = document.getElementById('saveBtn');
   const statusDiv = document.getElementById('status');
+  const defaultButtonContent = '<span>💾</span><span>Salvar configurações</span>';
 
   // URL fixa da API Milvus
   const MILVUS_API_URL = 'https://apiintegracao.milvus.com.br/api';
@@ -39,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     saveBtn.disabled = true;
-    saveBtn.textContent = '⏳ Testando conexão...';
+  saveBtn.innerHTML = '<span>⏳</span><span>Testando conexão...</span>';
 
     try {
       // Testa a conexão com a API Milvus
@@ -71,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         saveBtn.disabled = false;
-        saveBtn.textContent = '💾 Salvar Token';
+        saveBtn.innerHTML = defaultButtonContent;
 
         // Recarrega a extensão nas abas do WhatsApp Web
         chrome.tabs.query({ url: 'https://web.whatsapp.com/*' }, (tabs) => {
@@ -91,10 +92,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }, () => {
         showStatus('⚠️ Token salvo, mas não foi possível testar a conexão', 'error');
         saveBtn.disabled = false;
-        saveBtn.textContent = '💾 Salvar Token';
+        saveBtn.innerHTML = defaultButtonContent;
       });
     }
   });
+
+  // Restaura conteúdo padrão do botão ao carregar popup
+  saveBtn.innerHTML = defaultButtonContent;
 
   function showStatus(message, type) {
     statusDiv.textContent = message;

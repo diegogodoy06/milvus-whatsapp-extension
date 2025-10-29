@@ -5,204 +5,451 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Configurações - WhatsApp Suporte TI</title>
   <style>
+    :root {
+      --primary: #0a5f58;
+      --primary-dark: #06443f;
+      --background: #f4f7f9;
+      --surface: #ffffff;
+      --surface-alt: #f9fbfd;
+      --border: #d9e3ea;
+      --text-strong: #1f2d3d;
+      --text-muted: #6c7a89;
+      --shadow: 0 16px 32px rgba(15, 63, 54, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      width: 350px;
+      width: 360px;
+      min-height: 100%;
       margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background-color: #f0f2f5;
+      padding: 20px;
+      font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: var(--background);
+      color: var(--text-strong);
+    }
+
+    a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .popup {
+      background: var(--surface);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
     }
 
     .header {
-      background: linear-gradient(135deg, #00a884 0%, #008f6f 100%);
-      color: white;
       padding: 20px;
-      text-align: center;
+      background: linear-gradient(135deg, rgba(10, 95, 88, 0.92), rgba(6, 68, 63, 0.92));
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .header-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
     }
 
     .header h1 {
       margin: 0;
       font-size: 18px;
-      font-weight: 500;
+      font-weight: 600;
     }
 
     .header p {
-      margin: 5px 0 0;
+      margin: 4px 0 0;
       font-size: 12px;
-      opacity: 0.9;
+      opacity: 0.85;
     }
 
     .content {
       padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      background: var(--surface);
+    }
+
+    .section {
+      background: var(--surface-alt);
+      border-radius: 12px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 18px rgba(15, 63, 54, 0.04);
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--primary-dark);
+      margin: 0 0 12px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(10, 95, 88, 0.12);
+      color: var(--primary-dark);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
     }
 
     .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
       margin-bottom: 16px;
     }
 
-    .form-group label {
-      display: block;
-      margin-bottom: 6px;
+    .form-group:last-of-type {
+      margin-bottom: 0;
+    }
+
+    label {
       font-size: 13px;
-      font-weight: 500;
-      color: #54656f;
+      font-weight: 600;
+      color: var(--text-strong);
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .form-group input {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #d1d7db;
-      border-radius: 6px;
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 12px;
       font-size: 14px;
-      box-sizing: border-box;
+      color: var(--primary);
+      pointer-events: none;
     }
 
-    .form-group input:focus {
+    input[type="text"] {
+      width: 100%;
+      padding: 10px 12px 10px 38px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text-strong);
+      background: #ffffff;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    input[type="text"]::placeholder {
+      color: #9aa7b3;
+    }
+
+    input[type="text"]:focus {
       outline: none;
-      border-color: #00a884;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(10, 95, 88, 0.12);
     }
 
-    .form-group small {
-      display: block;
-      margin-top: 4px;
+    .hint {
       font-size: 11px;
-      color: #667781;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hint span {
+      font-size: 12px;
     }
 
     .btn {
       width: 100%;
       padding: 12px;
-      background-color: #00a884;
-      color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
+      background: linear-gradient(130deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: #ffffff;
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
-      transition: background-color 0.2s;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 10px 18px rgba(10, 95, 88, 0.18);
     }
 
-    .btn:hover {
-      background-color: #008f6f;
+    .btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 20px rgba(10, 95, 88, 0.22);
     }
 
     .btn:disabled {
-      background-color: #d1d7db;
+      background: #d7e2e0;
+      color: #7c8b88;
+      box-shadow: none;
       cursor: not-allowed;
     }
 
     .status {
-      margin-top: 12px;
-      padding: 10px;
-      border-radius: 6px;
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 10px;
       font-size: 13px;
+      font-weight: 600;
       text-align: center;
+      border: 1px solid transparent;
+      display: none;
     }
 
     .status.success {
-      background-color: #d1fae5;
-      color: #065f46;
+      display: block;
+      background: rgba(10, 95, 88, 0.1);
+      color: var(--primary-dark);
+      border-color: rgba(10, 95, 88, 0.25);
     }
 
     .status.error {
-      background-color: #fee;
-      color: #c53030;
+      display: block;
+      background: rgba(203, 68, 68, 0.1);
+      color: #a73535;
+      border-color: rgba(203, 68, 68, 0.25);
     }
 
-    .info-box {
-      background-color: white;
-      padding: 12px;
-      border-radius: 8px;
-      margin-top: 16px;
-      font-size: 12px;
-      color: #54656f;
-      line-height: 1.6;
+    .status::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 8px;
+      background-color: currentColor;
+      opacity: 0.35;
     }
 
-    .info-box h3 {
-      margin: 0 0 8px 0;
+    .info-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .info-card {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .info-card h3 {
+      margin: 0;
       font-size: 13px;
-      color: #111b21;
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .info-box ul {
-      margin: 8px 0;
-      padding-left: 20px;
+    .steps {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
-    .info-box li {
-      margin-bottom: 4px;
+    .steps li {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 12px;
+      background: #ffffff;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      color: var(--text-strong);
     }
 
-    .divider {
-      height: 1px;
-      background-color: #e9edef;
-      margin: 16px 0;
+    .step-index {
+      background: rgba(10, 95, 88, 0.1);
+      color: var(--primary-dark);
+      border-radius: 9px;
+      font-weight: 600;
+      min-width: 22px;
+      height: 22px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(10, 95, 88, 0.2);
+    }
+
+    .api-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--surface-alt);
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px dashed rgba(10, 95, 88, 0.2);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      color: var(--primary-dark);
+      background: rgba(10, 95, 88, 0.1);
+      border: 1px solid rgba(10, 95, 88, 0.16);
+    }
+
+    .footer {
+      font-size: 11px;
+      text-align: center;
+      color: var(--text-muted);
+      padding: 0 20px 18px;
+    }
+
+    .footer span {
+      font-weight: 600;
+      color: var(--primary-dark);
     }
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>⚙️ Configurações</h1>
-    <p>WhatsApp Suporte TI</p>
-  </div>
-
-  <div class="content">
-    <form id="configForm">
-      <div class="form-group">
-        <label for="apiToken">🔑 Token de Autenticação</label>
-        <input 
-          type="text" 
-          id="apiToken" 
-          placeholder="Cole seu token aqui"
-          required
-        />
-        <small>Token gerado no <a href="https://portal.milvus.com.br" target="_blank">Portal Milvus</a></small>
+  <div class="popup">
+    <div class="header">
+      <div class="header-icon">🎛️</div>
+      <div class="header-content">
+        <h1>Configurações</h1>
+        <p>WhatsApp Suporte TI · Integração Milvus</p>
       </div>
-
-      <div class="form-group">
-        <label for="geminiKey">🤖 Gemini API Key (opcional)</label>
-        <input
-          type="text"
-          id="geminiKey"
-          placeholder="Cole sua chave da Gemini API"
-        />
-        <small>Utilizada para sugerir assunto e descrição ao criar chamados a partir de mensagens</small>
-      </div>
-
-      <button type="submit" class="btn" id="saveBtn">
-        💾 Salvar Token
-      </button>
-    </form>
-
-    <div id="status" class="status" style="display: none;"></div>
-
-    <div class="divider"></div>
-
-    <div class="info-box">
-      <h3>📋 Como usar:</h3>
-      <ul>
-        <li><strong>1.</strong> Gere seu token no <a href="https://portal.milvus.com.br" target="_blank">Portal Milvus</a></li>
-        <li><strong>2.</strong> Cole o token acima e clique em "Salvar"</li>
-        <li><strong>3.</strong> Acesse <a href="https://web.whatsapp.com" target="_blank">WhatsApp Web</a></li>
-        <li><strong>4.</strong> Abra uma conversa com um cliente</li>
-        <li><strong>5.</strong> Clique no ícone 🎫 no cabeçalho</li>
-        <li><strong>6.</strong> Gerencie os chamados!</li>
-      </ul>
     </div>
 
-    <div class="info-box">
-      <h3>🔌 API Milvus Integrada</h3>
-      <p style="margin: 4px 0 8px; font-size: 11px; color: #667781;">
-        <strong>URL:</strong> https://apiintegracao.milvus.com.br/api
-      </p>
-      <ul style="font-size: 11px;">
-        <li>Listar chamados</li>
-        <li>Criar novo chamado</li>
-        <li>Ver detalhes completos</li>
-        <li>Adicionar acompanhamentos</li>
-        <li>Finalizar chamados</li>
-      </ul>
+    <div class="content">
+      <section class="section">
+        <div class="section-title">
+          <span>🔐 Credenciais de Acesso</span>
+          <span class="badge">Somente você vê essas informações</span>
+        </div>
+
+        <form id="configForm">
+          <div class="form-group">
+            <label for="apiToken">Token de Autenticação Milvus</label>
+            <div class="input-wrapper">
+              <span class="input-icon">🔑</span>
+              <input
+                type="text"
+                id="apiToken"
+                placeholder="Cole seu token seguro aqui"
+                required
+              />
+            </div>
+            <div class="hint">
+              <span>ℹ️</span>
+              <span>Gere o token em <a href="https://portal.milvus.com.br" target="_blank" rel="noopener">portal.milvus.com.br</a></span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="geminiKey">Chave da Gemini API <span class="chip">Opcional</span></label>
+            <div class="input-wrapper">
+              <span class="input-icon">🤖</span>
+              <input
+                type="text"
+                id="geminiKey"
+                placeholder="Habilite sugestões inteligentes da IA"
+              />
+            </div>
+            <div class="hint">
+              <span>✨</span>
+              <span>Usada para gerar títulos, descrições e refinamentos via Gemini 2.0 Flash</span>
+            </div>
+          </div>
+
+          <button type="submit" class="btn" id="saveBtn">
+            <span>💾</span>
+            <span>Salvar configurações</span>
+          </button>
+
+          <div id="status" class="status" role="status" aria-live="polite"></div>
+        </form>
+      </section>
+
+      <section class="section">
+        <div class="section-title">🧭 Passo a passo rápido</div>
+        <ul class="steps">
+          <li><span class="step-index">1</span>Gere o token no <a href="https://portal.milvus.com.br" target="_blank" rel="noopener">Portal Milvus</a> (menu Integrações).</li>
+          <li><span class="step-index">2</span>Cole as chaves acima e clique em <strong>Salvar configurações</strong>.</li>
+          <li><span class="step-index">3</span>Acesse o <a href="https://web.whatsapp.com" target="_blank" rel="noopener">WhatsApp Web</a> e abra um chat de cliente.</li>
+          <li><span class="step-index">4</span>Use o painel lateral para abrir chamados, comentar e finalizar.</li>
+        </ul>
+      </section>
+
+      <section class="section">
+        <div class="section-title">🔌 Conexão Milvus</div>
+        <div class="info-grid">
+          <div class="info-card">
+            <h3>🌐 Endpoint oficial</h3>
+            <div class="api-meta">
+              <strong>URL:</strong>
+              https://apiintegracao.milvus.com.br/api
+              <span>Este endereço é usado automaticamente pela extensão.</span>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <h3>📦 Recursos habilitados</h3>
+            <div class="chip-row">
+              <span class="chip">Listagem de chamados</span>
+              <span class="chip">Criação de chamados</span>
+              <span class="chip">Histórico completo</span>
+              <span class="chip">Acompanhamentos</span>
+              <span class="chip">Finalização</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="footer">
+      Dica: revise o token periodicamente e mantenha a chave Gemini em um local seguro. <span>Bom atendimento!</span>
     </div>
   </div>
 
