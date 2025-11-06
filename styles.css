@@ -1292,3 +1292,24 @@ body[data-theme="dark"] .ti-form-group textarea.ti-ai-filled {
   border-left-color: #00a884;
 }
 
+/* Indicador de imagem anexada */
+.ti-image-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: rgba(0, 168, 132, 0.1);
+  color: var(--ti-accent);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid rgba(0, 168, 132, 0.2);
+}
+
+body[data-theme="dark"] .ti-image-indicator {
+  background: rgba(20, 77, 55, 0.25);
+  color: #d9f5e4;
+  border-color: rgba(20, 77, 55, 0.4);
+}
+

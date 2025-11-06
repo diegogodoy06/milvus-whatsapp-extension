@@ -665,6 +665,64 @@ class WhatsAppSupportExtension {
     return parts.join('\n').trim();
   }
 
+  extractImageFromMessage(messageElement) {
+    if (!messageElement) return null;
+
+    // Busca por imagens na mensagem
+    const imageSelectors = [
+      'img[src*="blob:"]',
+      'img[data-testid="media-img"]',
+      'img[role="button"]',
+      'div[data-testid="image-thumb"] img',
+      'div[data-testid="media-image"] img'
+    ];
+
+    for (const selector of imageSelectors) {
+      const img = messageElement.querySelector(selector);
+      if (img && img.src && img.src.startsWith('blob:')) {
+        return {
+          element: img,
+          src: img.src,
+          alt: img.alt || ''
+        };
+      }
+    }
+
+    return null;
+  }
+
+  async convertImageToBase64(imgElement) {
+    try {
+      return new Promise((resolve, reject) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        
+        img.onload = () => {
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          ctx.drawImage(img, 0, 0);
+          
+          try {
+            const base64 = canvas.toDataURL('image/jpeg', 0.8);
+            const base64Data = base64.split(',')[1];
+            resolve(base64Data);
+          } catch (error) {
+            reject(error);
+          }
+        };
+        
+        img.onerror = () => reject(new Error('Falha ao carregar imagem'));
+        img.src = imgElement.src;
+      });
+    } catch (error) {
+      console.error('Erro ao converter imagem para base64:', error);
+      throw error;
+    }
+  }
+
    getMessageDirection(messageElement) {
      if (!messageElement || !messageElement.classList) return null;
      const classTokens = Array.from(messageElement.classList);
@@ -746,14 +804,24 @@ class WhatsAppSupportExtension {
       visited.add(el);
 
       const text = this.extractMessageTextFromBubble(el);
-      if (!text) {
+      const image = this.extractImageFromMessage(el);
+      
+      let content = '';
+      if (text) {
+        content += text;
+      }
+      if (image) {
+        content += (content ? '\n' : '') + '[IMAGEM ANEXADA]';
+      }
+      
+      if (!content) {
         return;
       }
 
       if (position === 'start') {
-        collected.unshift(text);
+        collected.unshift(content);
       } else {
-        collected.push(text);
+        collected.push(content);
       }
     };
 
@@ -784,9 +852,10 @@ class WhatsAppSupportExtension {
 
   async handleMessageTicket(messageElement) {
     const messageText = this.collectContextualMessageText(messageElement);
+    const imageData = this.extractImageFromMessage(messageElement);
 
-    if (!messageText) {
-      this.showMessage('Não foi possível capturar o texto da mensagem selecionada.', 'error');
+    if (!messageText && !imageData) {
+      this.showMessage('Não foi possível capturar conteúdo da mensagem selecionada.', 'error');
       return;
     }
 
@@ -801,9 +870,13 @@ class WhatsAppSupportExtension {
         this.togglePanel(true);
       }
 
-      this.showMessage('💡 Gerando sugestão de chamado com Gemini...', 'info');
+      if (imageData) {
+        this.showMessage('�️ Analisando imagem com Gemini...', 'info');
+      } else {
+        this.showMessage('�💡 Gerando sugestão de chamado com Gemini...', 'info');
+      }
 
-      const suggestion = await this.generateTicketSuggestion(messageText);
+      const suggestion = await this.generateTicketSuggestion(messageText, imageData);
 
       if (suggestion.notice) {
         this.showMessage(suggestion.notice, 'info');
@@ -820,7 +893,8 @@ class WhatsAppSupportExtension {
         categoryId: suggestion.categoryId,
         primaryCategory: suggestion.primaryCategory,
         secondaryCategory: suggestion.secondaryCategory,
-        source: suggestion.source || 'gemini'
+        source: suggestion.source || 'gemini',
+        hasImage: !!imageData
       });
     } catch (error) {
       console.error('Erro ao gerar sugestão com Gemini:', error);
@@ -828,29 +902,47 @@ class WhatsAppSupportExtension {
 
       this.showNewTicketForm({
         title: '',
-        description: messageText,
+        description: messageText || '[Imagem anexada - análise não disponível]',
         contactName: this.currentContact,
         contactPhone: this.currentPhone,
         originalMessage: messageText,
-        source: 'manual'
+        source: 'manual',
+        hasImage: !!imageData
       });
     }
   }
 
-  async generateTicketSuggestion(messageText) {
-    const sanitizedMessage = messageText.trim().slice(0, 4000);
+  async generateTicketSuggestion(messageText, imageData = null) {
+    const sanitizedMessage = messageText ? messageText.trim().slice(0, 4000) : '';
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
 
     // Lista de categorias disponíveis para o Gemini escolher
     const categoriesText = Object.keys(MILVUS_CATEGORIES).join('\n- ');
 
-    const prompt = `Você é um analista de suporte técnico. Analise a mensagem e:
+    let prompt = `Você é um analista de suporte técnico. `;
+    
+    if (imageData) {
+      prompt += `Analise a imagem fornecida e o texto (se houver) para:
+1. Descrever o que você vê na imagem (telas, erros, equipamentos, problemas visíveis)
+2. Gerar um título curto (até 80 caracteres) baseado no problema identificado
+3. Criar uma descrição detalhada incluindo o que foi observado na imagem
+4. ESCOLHER a categoria mais adequada desta lista (use EXATAMENTE como está escrito):
+
+CATEGORIAS DISPONÍVEIS:
+- ${categoriesText}
+
+Considere a imagem como evidência principal do problema relatado.`;
+    } else {
+      prompt += `Analise a mensagem e:
 1. Gere um título curto (até 80 caracteres)
 2. Crie uma descrição detalhada
 3. ESCOLHA a categoria mais adequada desta lista (use EXATAMENTE como está escrito):
 
 CATEGORIAS DISPONÍVEIS:
-- ${categoriesText}
+- ${categoriesText}`;
+    }
+
+    prompt += `
 
 Responda APENAS em JSON com o formato:
 {
@@ -859,17 +951,40 @@ Responda APENAS em JSON com o formato:
   "category": "categoria exata da lista"
 }
 
-Use um tom profissional e claro em português.
+Use um tom profissional e claro em português.`;
 
-Mensagem do usuário: """${sanitizedMessage}"""`;
+    if (messageText) {
+      prompt += `\n\nTexto da mensagem: """${sanitizedMessage}"""`;
+    }
+
+    const parts = [];
+    
+    // Adiciona o prompt de texto
+    parts.push({ text: prompt });
+
+    // Adiciona imagem se disponível
+    if (imageData) {
+      try {
+        const base64Image = await this.convertImageToBase64(imageData.element);
+        parts.push({
+          inline_data: {
+            mime_type: "image/jpeg",
+            data: base64Image
+          }
+        });
+      } catch (error) {
+        console.warn('Falha ao processar imagem, continuando só com texto:', error);
+        if (!messageText) {
+          throw new Error('Não foi possível processar a imagem e não há texto disponível');
+        }
+      }
+    }
 
     const payload = {
       contents: [
         {
           role: 'user',
-          parts: [
-            { text: prompt }
-          ]
+          parts: parts
         }
       ],
       generationConfig: {
@@ -894,16 +1009,16 @@ Mensagem do usuário: """${sanitizedMessage}"""`;
       throw new Error(errorMessage);
     }
 
-    const parts = data?.candidates?.[0]?.content?.parts || [];
-    const combinedText = parts.map(part => part.text).filter(Boolean).join('\n').trim();
+    const responseParts = data?.candidates?.[0]?.content?.parts || [];
+    const combinedText = responseParts.map(part => part.text).filter(Boolean).join('\n').trim();
 
     if (!combinedText) {
       return {
         title: '',
-        description: sanitizedMessage,
+        description: sanitizedMessage || '[Imagem anexada - descrição não gerada]',
         category: null,
         categoryId: null,
-        notice: 'Não foi possível gerar sugestão automática. Mensagem original carregada.',
+        notice: 'Não foi possível gerar sugestão automática. Conteúdo original carregado.',
         source: 'gemini'
       };
     }
@@ -937,7 +1052,7 @@ Mensagem do usuário: """${sanitizedMessage}"""`;
       
       return {
         title: typeof parsed.title === 'string' ? parsed.title.trim() : '',
-        description: typeof parsed.description === 'string' ? parsed.description.trim() : sanitizedMessage,
+        description: typeof parsed.description === 'string' ? parsed.description.trim() : (sanitizedMessage || '[Imagem anexada - descrição não gerada]'),
         category: parsed.category,
         categoryId: categoryId,
         primaryCategory: primaryCategory,
@@ -948,10 +1063,10 @@ Mensagem do usuário: """${sanitizedMessage}"""`;
       console.warn('Não foi possível interpretar resposta da Gemini como JSON. Texto bruto:', combinedText);
       return {
         title: '',
-        description: sanitizedMessage,
+        description: sanitizedMessage || '[Imagem anexada - descrição não gerada]',
         category: null,
         categoryId: null,
-        notice: 'Sugestão recebida em formato inesperado. Mensagem original carregada.',
+        notice: 'Sugestão recebida em formato inesperado. Conteúdo original carregado.',
         source: 'gemini'
       };
     }
@@ -1881,11 +1996,17 @@ Comentário original: """${sanitizedComment}"""`;
       <div class="ti-ticket-context-message">
         <span class="ti-context-label">Mensagem selecionada</span>
         <p>${escape(originalMessage).replace(/\n/g, '<br>')}</p>
+        ${prefill.hasImage ? '<span class="ti-image-indicator">🖼️ Imagem anexada e analisada</span>' : ''}
       </div>
     ` : '';
 
+    let badgeText = '✨ Sugestão gerada pela Gemini (título, descrição e categorias)';
+    if (prefill.hasImage && suggestionSource === 'gemini') {
+      badgeText = '🖼️ Sugestão gerada pela Gemini com análise de imagem';
+    }
+
     const badgeHtml = suggestionSource === 'gemini' ? `
-      <span class="ti-context-badge">✨ Sugestão gerada pela Gemini (título, descrição e categorias)</span>
+      <span class="ti-context-badge">${badgeText}</span>
     ` : '';
 
     listDiv.innerHTML = `

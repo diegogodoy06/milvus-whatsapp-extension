@@ -6,6 +6,7 @@ Extensão para Google Chrome que integra o WhatsApp Web ao service desk Milvus, 
 
 - Botão de "Abrir chamado" em cada mensagem para iniciar o fluxo sem sair do WhatsApp Web.
 - Captura automática do contexto das últimas mensagens do cliente para enviar ao Gemini.
+- **Análise de imagens com IA**: quando uma mensagem contém imagem, o Gemini analisa visualmente o conteúdo para identificar problemas, erros de tela, equipamentos, etc.
 - Sugestões de título, descrição e categorias geradas pela Gemini 2.0 Flash (Google AI).
 - Formulário rápido para criar chamados Milvus com preenchimento assistido por IA.
 - Confirmação automática no WhatsApp informando ao contato que o ticket foi criado.
@@ -32,9 +33,10 @@ Extensão para Google Chrome que integra o WhatsApp Web ao service desk Milvus, 
 ## Fluxo de Uso
 
 1. Clique no ícone 🎫 ao lado de uma mensagem do cliente para iniciar um ticket.
-2. Revise as sugestões do Gemini e ajuste antes de enviar.
-3. Confirme a criação; o contato recebe automaticamente a mensagem de abertura do chamado.
-4. Utilize o painel para visualizar chamados ativos, adicionar comentários ou finalizar o atendimento.
+2. **Para mensagens com imagem**: o Gemini analisará automaticamente o conteúdo visual (telas de erro, equipamentos, problemas visíveis) junto com qualquer texto.
+3. Revise as sugestões do Gemini e ajuste antes de enviar.
+4. Confirme a criação; o contato recebe automaticamente a mensagem de abertura do chamado.
+5. Utilize o painel para visualizar chamados ativos, adicionar comentários ou finalizar o atendimento.
 
 ## Licença
 
