@@ -1,70 +1,70 @@
-// Content Script - Injetado no WhatsApp Web
-console.log('WhatsApp Suporte TI - Extensão Milvus carregada');
+﻿// Content Script - Injetado no WhatsApp Web
 
-// Configuração da API Milvus (pode ser alterada via popup)
+
+// ConfiguraÃ§Ã£o da API Milvus (pode ser alterada via popup)
 let API_BASE_URL = 'https://apiintegracao.milvus.com.br/api'; // URL da API Milvus
-let API_TOKEN = ''; // Token de autenticação
+let API_TOKEN = ''; // Token de autenticaÃ§Ã£o
 let GEMINI_API_KEY = '';
 
-// Mapeamento de Categorias do Milvus (Categoria Primária | Categoria Secundária : ID)
+// Mapeamento de Categorias do Milvus (Categoria PrimÃ¡ria | Categoria SecundÃ¡ria : ID)
 const MILVUS_CATEGORIES = {
   'Acessos': '157982',
-  'Acessos | Liberação Portões Estoque': '631701',
-  'Acessos | Recuperação de senha': '631422',
-  'Acessos | Liberação de Sites / Firewall': '631421',
-  'Acessos | Liberação de acesso Outros': '631419',
-  'Acessos | Liberação de acesso Alarme': '631417',
-  'Acessos | Remoção de Acessos': '563653',
-  'Acessos | Liberação de funções ERP': '563543',
-  'Acessos | Liberação de acesso Pastas (NAS)': '562350',
-  'Acessos | Novo colaborador / Cadastro de funcionário': '562349',
+  'Acessos | LiberaÃ§Ã£o PortÃµes Estoque': '631701',
+  'Acessos | RecuperaÃ§Ã£o de senha': '631422',
+  'Acessos | LiberaÃ§Ã£o de Sites / Firewall': '631421',
+  'Acessos | LiberaÃ§Ã£o de acesso Outros': '631419',
+  'Acessos | LiberaÃ§Ã£o de acesso Alarme': '631417',
+  'Acessos | RemoÃ§Ã£o de Acessos': '563653',
+  'Acessos | LiberaÃ§Ã£o de funÃ§Ãµes ERP': '563543',
+  'Acessos | LiberaÃ§Ã£o de acesso Pastas (NAS)': '562350',
+  'Acessos | Novo colaborador / Cadastro de funcionÃ¡rio': '562349',
   'Backup': '157479',
-  'Backup | Execução': '631424',
-  'Backup | Restore Execução': '561052',
+  'Backup | ExecuÃ§Ã£o': '631424',
+  'Backup | Restore ExecuÃ§Ã£o': '561052',
   'Backup | Corrompido': '559948',
-  'Backup | Não rodou': '559947',
+  'Backup | NÃ£o rodou': '559947',
   'Gerencial': '157749',
-  'Gerencial | Prestação de contas': '631425',
-  'Gerencial | Relatórios gerenciais / Saída': '561068',
+  'Gerencial | PrestaÃ§Ã£o de contas': '631425',
+  'Gerencial | RelatÃ³rios gerenciais / SaÃ­da': '561068',
   'Gerencial | Procedimento Operacional': '561063',
-  'Gerencial | Torno CNC / Prorrogar expiração mensal': '561061',
+  'Gerencial | Torno CNC / Prorrogar expiraÃ§Ã£o mensal': '561061',
   'Hardware': '157480',
-  'Hardware | Outros tipos de aprovações': '631595',
-  'Hardware | Configuração inicial': '631426',
-  'Hardware | Mudança física': '621634',
+  'Hardware | Outros tipos de aprovaÃ§Ãµes': '631595',
+  'Hardware | ConfiguraÃ§Ã£o inicial': '631426',
+  'Hardware | MudanÃ§a fÃ­sica': '621634',
   'Hardware | Passagem de cabos': '580941',
-  'Hardware | Computador Não liga': '561075',
+  'Hardware | Computador NÃ£o liga': '561075',
   'Hardware | Mouse / Teclado / Monitor / Outros': '561074',
   'Hardware | Limpeza': '559950',
-  'Hardware | Troca de peça': '559949',
+  'Hardware | Troca de peÃ§a': '559949',
   'Impressoras': '159289',
-  'Impressoras | Outros Problemas de impressão': '631427',
+  'Impressoras | Outros Problemas de impressÃ£o': '631427',
   'Impressoras | Suprimentos / Troca de Tonner': '567350',
-  'Impressoras | Manutenção': '567349',
-  'Impressoras | Instalação': '567348',
+  'Impressoras | ManutenÃ§Ã£o': '567349',
+  'Impressoras | InstalaÃ§Ã£o': '567348',
   'Servidor': '157482',
   'Servidor | Servidor NAS': '561090',
   'Servidor | Servidor Windows': '561086',
-  'Servidor | Outros servidores / Virtualização': '559955',
+  'Servidor | Outros servidores / VirtualizaÃ§Ã£o': '559955',
   'Software': '157481',
-  'Software | Instalação / Configuração / Remoção': '631443',
-  'Software | Formatação': '563670',
+  'Software | InstalaÃ§Ã£o / ConfiguraÃ§Ã£o / RemoÃ§Ã£o': '631443',
+  'Software | FormataÃ§Ã£o': '563670',
   'Software | SolidWorks': '561114',
   'Software | Adobe / Corel': '561111',
   'Software | Sistema Operacional Problemas': '561107',
-  'Software | Contratar software / licença': '561103',
-  'Software | ERP Ajuste / Parametrização': '559953',
+  'Software | Contratar software / licenÃ§a': '561103',
+  'Software | ERP Ajuste / ParametrizaÃ§Ã£o': '559953',
   'Software | ERP Erro no sistema': '559951',
   'Telefonia': '157751',
-  'Telefonia | Relatórios': '633559',
+  'Telefonia | RelatÃ³rios': '633559',
   'Telefonia | Problema com Aparelho': '631428',
   'Telefonia | Ramal Problema': '561126',
   'Telefonia | Ramal Configurar / Instalar': '561125',
-  'Telefonia | Problema linha móvel / chip': '561123',
-  'Telefonia | Contratar Ramal / Linha / Linha Móvel': '561122'
+  'Telefonia | Problema linha mÃ³vel / chip': '561123',
+  'Telefonia | Contratar Ramal / Linha / Linha MÃ³vel': '561122'
 };
 
-// Carrega configurações salvas
+// Carrega configuraÃ§Ãµes salvas
 chrome.storage.sync.get(['apiBaseUrl', 'apiToken', 'geminiApiKey'], (result) => {
   if (result.apiBaseUrl) {
     API_BASE_URL = result.apiBaseUrl;
@@ -90,7 +90,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
   }
 });
 
-// Classe principal da extensão
+// Classe principal da extensÃ£o
 class WhatsAppSupportExtension {
   constructor() {
     this.currentContact = null;
@@ -111,7 +111,7 @@ class WhatsAppSupportExtension {
   }
 
   init() {
-    console.log('🚀 Inicializando extensão...');
+    
     
     // Detecta e aplica tema do WhatsApp
     this.detectAndApplyTheme();
@@ -130,7 +130,7 @@ class WhatsAppSupportExtension {
     }
 
     if (reason) {
-      console.log(`⏱️ Reagendando detecção (${reason}) em ${delay}ms`);
+      
     }
 
     this.contactDetectionTimer = setTimeout(() => {
@@ -140,7 +140,7 @@ class WhatsAppSupportExtension {
   }
 
   detectAndApplyTheme() {
-    // Detecta se o WhatsApp está em modo escuro
+    // Detecta se o WhatsApp estÃ¡ em modo escuro
     const isDark = document.body.classList.contains('dark') ||
                    document.documentElement.getAttribute('data-theme') === 'dark' ||
                    document.documentElement.getAttribute('data-color-scheme') === 'dark' ||
@@ -148,13 +148,13 @@ class WhatsAppSupportExtension {
     
     if (isDark) {
       document.body.setAttribute('data-theme', 'dark');
-      console.log('🌙 Modo escuro detectado e aplicado');
+      
     } else {
       document.body.setAttribute('data-theme', 'light');
-      console.log('☀️ Modo claro detectado e aplicado');
+      
     }
     
-    // Observer para detectar mudanças de tema
+    // Observer para detectar mudanÃ§as de tema
     const themeObserver = new MutationObserver(() => {
       this.detectAndApplyTheme();
     });
@@ -171,34 +171,34 @@ class WhatsAppSupportExtension {
   }
 
   waitForWhatsAppLoad() {
-    console.log('⏳ Aguardando WhatsApp Web carregar...');
+    
     let attempts = 0;
     
     const checkInterval = setInterval(() => {
       attempts++;
       
-      // Verifica se o WhatsApp está carregado (qualquer elemento principal)
+      // Verifica se o WhatsApp estÃ¡ carregado (qualquer elemento principal)
       const appElement = document.querySelector('#app');
       const hasLoaded = appElement && appElement.querySelector('[data-testid], [role]');
       
       if (hasLoaded) {
         clearInterval(checkInterval);
-        console.log('✅ WhatsApp Web carregado!');
+        
         
         // Mostra o painel automaticamente
         setTimeout(() => {
-          console.log('� Mostrando painel fixo lateral automaticamente...');
+          
           this.togglePanel(true);
         }, 500);
         
-        // Configura observers para detectar mudanças de contato
+        // Configura observers para detectar mudanÃ§as de contato
         this.setupObservers();
         
       } else if (attempts > 60) {
         clearInterval(checkInterval);
-        console.error('❌ Timeout: WhatsApp não carregou após 60 tentativas');
+        console.error('âŒ Timeout: WhatsApp nÃ£o carregou apÃ³s 60 tentativas');
       } else if (attempts % 10 === 0) {
-        console.log(`⏳ Ainda aguardando... (tentativa ${attempts}/60)`);
+        
       }
     }, 1000);
   }
@@ -249,25 +249,25 @@ class WhatsAppSupportExtension {
         </div>
 
         <div id="ti-ticket-details" class="ti-ticket-details hidden">
-          <!-- Detalhes do chamado serão inseridos aqui -->
+          <!-- Detalhes do chamado serÃ£o inseridos aqui -->
         </div>
       </div>
     `;
 
-    // Injeta direto no BODY para garantir que sempre apareça
-    console.log('💉 Injetando painel no body...');
+    // Injeta direto no BODY para garantir que sempre apareÃ§a
+    
     document.body.appendChild(panel);
     
     // Inicializa com painel oculto
     document.body.classList.add('ti-panel-hidden');
     
-    // Cria botão flutuante para abrir/fechar o painel
+    // Cria botÃ£o flutuante para abrir/fechar o painel
     this.createFloatingButton();
     
     this.setupEventListeners();
     this.adjustWhatsAppLayout();
     
-    console.log('✅ Painel injetado com sucesso!');
+    
   }
 
   createFloatingButton() {
@@ -282,12 +282,12 @@ class WhatsAppSupportExtension {
     `;
     
     button.addEventListener('click', () => {
-      console.log('🖱️ Botão flutuante clicado!');
+      
       this.togglePanel();
     });
     
     document.body.appendChild(button);
-    console.log('✅ Botão flutuante criado');
+    
   }
 
   adjustWhatsAppLayout() {
@@ -295,8 +295,8 @@ class WhatsAppSupportExtension {
     const style = document.createElement('style');
     style.id = 'ti-layout-adjustments';
     style.textContent = `
-      /* Força o WhatsApp a deixar espaço para o painel fixo */
-      /* Aplica em múltiplos elementos para garantir compatibilidade */
+      /* ForÃ§a o WhatsApp a deixar espaÃ§o para o painel fixo */
+      /* Aplica em mÃºltiplos elementos para garantir compatibilidade */
       body:not(.ti-panel-hidden) #app,
       body:not(.ti-panel-hidden) #app > div,
       body:not(.ti-panel-hidden) #app > div > div,
@@ -307,13 +307,13 @@ class WhatsAppSupportExtension {
         transition: max-width 0.3s ease !important;
       }
       
-      /* Garante que o container principal respeite o espaço */
+      /* Garante que o container principal respeite o espaÃ§o */
       body:not(.ti-panel-hidden) #app {
         width: calc(100% - 400px) !important;
         transition: width 0.3s ease !important;
       }
       
-      /* Quando o painel está escondido, remove as restrições */
+      /* Quando o painel estÃ¡ escondido, remove as restriÃ§Ãµes */
       body.ti-panel-hidden #app,
       body.ti-panel-hidden #app > div,
       body.ti-panel-hidden #app > div > div,
@@ -330,8 +330,8 @@ class WhatsAppSupportExtension {
         right: auto !important;
       }
       
-      /* Esconde o painel quando o visualizador de mídia está aberto */
-      /* O visualizador de mídia deve ter z-index maior e ocupar tela cheia */
+      /* Esconde o painel quando o visualizador de mÃ­dia estÃ¡ aberto */
+      /* O visualizador de mÃ­dia deve ter z-index maior e ocupar tela cheia */
       body:has([data-testid="media-viewer"]) .ti-support-panel,
       body:has([data-testid="image-preview"]) .ti-support-panel,
       body:has([data-testid="media-viewer-modal"]) .ti-support-panel,
@@ -343,7 +343,7 @@ class WhatsAppSupportExtension {
         display: none !important;
       }
       
-      /* Também esconde o botão flutuante quando visualizador está aberto */
+      /* TambÃ©m esconde o botÃ£o flutuante quando visualizador estÃ¡ aberto */
       body:has([data-testid="media-viewer"]) .ti-floating-toggle,
       body:has([data-testid="image-preview"]) .ti-floating-toggle,
       body:has([data-testid="media-viewer-modal"]) .ti-floating-toggle,
@@ -355,7 +355,7 @@ class WhatsAppSupportExtension {
         display: none !important;
       }
       
-      /* Restaura o layout do WhatsApp quando visualizador está aberto */
+      /* Restaura o layout do WhatsApp quando visualizador estÃ¡ aberto */
       body:has([data-testid="media-viewer"]) #app,
       body:has([data-testid="image-preview"]) #app,
       body:has([data-testid="media-viewer-modal"]) #app,
@@ -368,17 +368,17 @@ class WhatsAppSupportExtension {
   }
 
   setupEventListeners() {
-    // Botão de fechar painel
+    // BotÃ£o de fechar painel
     document.getElementById('ti-close-panel')?.addEventListener('click', () => {
       this.togglePanel(false);
     });
 
-    // Botão de novo chamado
+    // BotÃ£o de novo chamado
     document.getElementById('ti-new-ticket')?.addEventListener('click', () => {
       this.showNewTicketForm();
     });
 
-    // Botão de atualizar
+    // BotÃ£o de atualizar
     document.getElementById('ti-refresh-tickets')?.addEventListener('click', () => {
       this.loadTickets();
     });
@@ -391,7 +391,7 @@ class WhatsAppSupportExtension {
 
   observeHeader(header) {
     if (!header) {
-      console.warn('⚠️ observeHeader chamado sem header válido');
+      console.warn('âš ï¸ observeHeader chamado sem header vÃ¡lido');
       return;
     }
 
@@ -412,22 +412,22 @@ class WhatsAppSupportExtension {
 
     this.headerObserver.observe(header, { 
       childList: true, 
-      subtree: false // Reduz chamadas desnecessárias
+      subtree: false // Reduz chamadas desnecessÃ¡rias
     });
-    console.log('✅ Observer configurado no header da conversa');
+    
   }
 
   setupObservers() {
-    console.log('📌 Configurando observers...');
     
-    // Observer na URL para detectar mudanças de conversa
+    
+    // Observer na URL para detectar mudanÃ§as de conversa
     let lastUrl = window.location.href;
     const urlObserver = new MutationObserver(() => {
       const currentUrl = window.location.href;
       if (currentUrl !== lastUrl) {
-        console.log('🔗 URL mudou:', currentUrl);
+        
         lastUrl = currentUrl;
-        this.scheduleContactDetection(900, 'mudança de URL');
+        this.scheduleContactDetection(900, 'mudanÃ§a de URL');
       }
     });
     
@@ -436,10 +436,10 @@ class WhatsAppSupportExtension {
       subtree: true 
     });
     
-    console.log('✅ Observer de URL configurado');
     
-    // Detecção inicial imediata
-    this.scheduleContactDetection(1000, 'detecção inicial');
+    
+    // DetecÃ§Ã£o inicial imediata
+    this.scheduleContactDetection(1000, 'detecÃ§Ã£o inicial');
     
     // Tenta configurar observer no header se existir
     const header = this.getChatHeader();
@@ -447,7 +447,7 @@ class WhatsAppSupportExtension {
       this.observeHeader(header);
     }
     
-    // Observer no main element para detectar quando um header é criado
+    // Observer no main element para detectar quando um header Ã© criado
     const mainElement = document.querySelector('[role="main"]') || document.querySelector('#main');
     if (mainElement && !this.mainObserver) {
       let mainDebounceTimer = null;
@@ -456,7 +456,7 @@ class WhatsAppSupportExtension {
         mainDebounceTimer = setTimeout(() => {
           const newHeader = this.getChatHeader();
           if (newHeader && newHeader !== this.chatHeader) {
-            console.log('🔁 Header da conversa recriado, detectando contato...');
+            
             this.observeHeader(newHeader);
             this.scheduleContactDetection(400, 'header recriado');
           }
@@ -467,10 +467,10 @@ class WhatsAppSupportExtension {
         childList: true, 
         subtree: false
       });
-      console.log('✅ Observer configurado no elemento principal');
+      
     }
 
-    // Observer na lista de chats para capturar seleção de novos contatos
+    // Observer na lista de chats para capturar seleÃ§Ã£o de novos contatos
     const chatList = document.querySelector('[data-testid="chat-list"]') ||
                      document.querySelector('[role="grid"]');
 
@@ -479,7 +479,7 @@ class WhatsAppSupportExtension {
       this.chatListObserver = new MutationObserver(() => {
         if (chatListDebounce) clearTimeout(chatListDebounce);
         chatListDebounce = setTimeout(() => {
-          console.log('📚 Mudança detectada na lista de chats');
+          
           this.scheduleContactDetection(350, 'lista de chats atualizada');
         }, 200);
       });
@@ -491,15 +491,15 @@ class WhatsAppSupportExtension {
 
       // Captura clique direto nos contatos
       chatList.addEventListener('click', () => {
-        console.log('🖱️ Clique na lista de chats');
+        
         this.scheduleContactDetection(350, 'clique na lista de chats');
       }, true);
 
-      console.log('✅ Observer configurado na lista de chats');
+      
     }
 
-    // Configura ações nas mensagens (botão de chamado)
-    console.log('🎫 Configurando ações de mensagens...');
+    // Configura aÃ§Ãµes nas mensagens (botÃ£o de chamado)
+    
     setTimeout(() => this.setupMessageActions(), 1500);
   }
 
@@ -509,7 +509,7 @@ class WhatsAppSupportExtension {
       this.messageObserver = null;
     }
 
-    // Tenta múltiplos seletores para área de mensagens
+    // Tenta mÃºltiplos seletores para Ã¡rea de mensagens
     const messagesArea = document.querySelector('#main') ||
                          document.querySelector('[role="main"]') ||
                          document.querySelector('[data-testid="conversation-panel-messages"]') ||
@@ -517,21 +517,21 @@ class WhatsAppSupportExtension {
                          document.querySelector('div[role="application"]');
 
     if (!messagesArea) {
-      console.log('ℹ️ Área de mensagens (#main ou [role="main"]) não encontrada. Tentando novamente em 2s...');
+      
       setTimeout(() => this.setupMessageActions(), 2000);
       return;
     }
 
-    console.log('✅ Área de mensagens encontrada:', messagesArea.id || messagesArea.getAttribute('role') || 'elemento detectado');
+    
 
     const attachButtons = () => {
-      // Tenta seletores mais genéricos para mensagens
+      // Tenta seletores mais genÃ©ricos para mensagens
       let messageNodes = [];
       
       // Busca por divs com classes que contenham 'message'
       const allDivs = messagesArea.querySelectorAll('div[class*="message"]');
       allDivs.forEach(div => {
-        // Verifica se é uma mensagem real (tem texto ou mídia)
+        // Verifica se Ã© uma mensagem real (tem texto ou mÃ­dia)
         const hasText = div.querySelector('span[dir="ltr"], span[dir="rtl"], span[dir="auto"]');
         const hasMedia = div.querySelector('img, video, audio');
         
@@ -540,7 +540,7 @@ class WhatsAppSupportExtension {
         }
       });
       
-      console.log(`🔍 Encontradas ${messageNodes.length} mensagens para adicionar botões`);
+      
       messageNodes.forEach(node => this.attachMessageAction(node));
     };
 
@@ -555,7 +555,7 @@ class WhatsAppSupportExtension {
       subtree: true
     });
 
-    console.log('✅ Observer de mensagens configurado');
+    
     this.setupContextMenuObserver();
   }
 
@@ -617,7 +617,7 @@ class WhatsAppSupportExtension {
       if (targetMessage) {
         this.handleMessageTicket(targetMessage);
       } else {
-        this.showMessage('Não foi possível identificar a mensagem selecionada.', 'error');
+        this.showMessage('NÃ£o foi possÃ­vel identificar a mensagem selecionada.', 'error');
       }
 
       setTimeout(() => {
@@ -648,7 +648,7 @@ class WhatsAppSupportExtension {
         menuButton.setAttribute('data-ti-listener', 'true');
         menuButton.addEventListener('click', () => {
           this.lastContextMenuMessage = messageElement;
-          console.log('📌 Menu clicado, mensagem armazenada');
+          
         }, { capture: true });
       }
     };
@@ -656,21 +656,21 @@ class WhatsAppSupportExtension {
     // Tenta detectar imediatamente
     detectMenuClick();
 
-    // Cria botão customizado simples que sempre aparece
+    // Cria botÃ£o customizado simples que sempre aparece
     const ticketBtn = document.createElement('button');
     ticketBtn.type = 'button';
     ticketBtn.className = 'ti-simple-ticket-btn';
     ticketBtn.title = 'Criar chamado de suporte';
-    ticketBtn.innerHTML = '🎫';
+    ticketBtn.innerHTML = 'ðŸŽ«';
 
     ticketBtn.addEventListener('click', (event) => {
       event.stopPropagation();
       event.preventDefault();
-      console.log('🎫 Botão de chamado clicado!');
+      
       this.handleMessageTicket(messageElement);
     });
 
-    // Adiciona o botão diretamente no container da mensagem
+    // Adiciona o botÃ£o diretamente no container da mensagem
     messageElement.style.position = 'relative';
     messageElement.appendChild(ticketBtn);
 
@@ -679,11 +679,11 @@ class WhatsAppSupportExtension {
       detectMenuClick();
     }, { once: false });
 
-    console.log('✅ Botão de chamado adicionado à mensagem');
+    
   }
 
   injectTicketButtonInMessageActions(messageElement) {
-    // Função removida - usando abordagem mais simples acima
+    // FunÃ§Ã£o removida - usando abordagem mais simples acima
   }
 
   extractMessageTextFromBubble(messageElement) {
@@ -794,7 +794,7 @@ class WhatsAppSupportExtension {
      }
 
      const prePlain = messageElement.getAttribute?.('data-pre-plain-text') || '';
-     if (prePlain.includes('Você:')) {
+     if (prePlain.includes('VocÃª:')) {
        return 'out';
      }
      if (prePlain.length) {
@@ -914,12 +914,12 @@ class WhatsAppSupportExtension {
     const imageData = this.extractImageFromMessage(messageElement);
 
     if (!messageText && !imageData) {
-      this.showMessage('Não foi possível capturar conteúdo da mensagem selecionada.', 'error');
+      this.showMessage('NÃ£o foi possÃ­vel capturar conteÃºdo da mensagem selecionada.', 'error');
       return;
     }
 
     if (!GEMINI_API_KEY) {
-      this.showMessage('Configure a chave da Gemini API nas configurações da extensão.', 'error');
+      this.showMessage('Configure a chave da Gemini API nas configuraÃ§Ãµes da extensÃ£o.', 'error');
       return;
     }
 
@@ -930,9 +930,9 @@ class WhatsAppSupportExtension {
       }
 
       if (imageData) {
-        this.showMessage('�️ Analisando imagem com Gemini...', 'info');
+        this.showMessage('ï¿½ï¸ Analisando imagem com Gemini...', 'info');
       } else {
-        this.showMessage('�💡 Gerando sugestão de chamado com Gemini...', 'info');
+        this.showMessage('ï¿½ðŸ’¡ Gerando sugestÃ£o de chamado com Gemini...', 'info');
       }
 
       const suggestion = await this.generateTicketSuggestion(messageText, imageData);
@@ -940,7 +940,7 @@ class WhatsAppSupportExtension {
       if (suggestion.notice) {
         this.showMessage(suggestion.notice, 'info');
       } else {
-        this.showMessage('✅ Sugestão criada! Revise os campos antes de enviar.', 'success');
+        this.showMessage('âœ… SugestÃ£o criada! Revise os campos antes de enviar.', 'success');
       }
 
       this.showNewTicketForm({
@@ -956,12 +956,12 @@ class WhatsAppSupportExtension {
         hasImage: !!imageData
       });
     } catch (error) {
-      console.error('Erro ao gerar sugestão com Gemini:', error);
-      this.showMessage(`Falha ao gerar sugestão: ${error.message}`, 'error');
+      console.error('Erro ao gerar sugestÃ£o com Gemini:', error);
+      this.showMessage(`Falha ao gerar sugestÃ£o: ${error.message}`, 'error');
 
       this.showNewTicketForm({
         title: '',
-        description: messageText || '[Imagem anexada - análise não disponível]',
+        description: messageText || '[Imagem anexada - anÃ¡lise nÃ£o disponÃ­vel]',
         contactName: this.currentContact,
         contactPhone: this.currentPhone,
         originalMessage: messageText,
@@ -975,29 +975,29 @@ class WhatsAppSupportExtension {
     const sanitizedMessage = messageText ? messageText.trim().slice(0, 4000) : '';
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
 
-    // Lista de categorias disponíveis para o Gemini escolher
+    // Lista de categorias disponÃ­veis para o Gemini escolher
     const categoriesText = Object.keys(MILVUS_CATEGORIES).join('\n- ');
 
-    let prompt = `Você é um analista de suporte técnico. `;
+    let prompt = `VocÃª Ã© um analista de suporte tÃ©cnico. `;
     
     if (imageData) {
       prompt += `Analise a imagem fornecida e o texto (se houver) para:
-1. Descrever o que você vê na imagem (telas, erros, equipamentos, problemas visíveis)
-2. Gerar um título curto (até 80 caracteres) baseado no problema identificado
-3. Criar uma descrição detalhada incluindo o que foi observado na imagem
-4. ESCOLHER a categoria mais adequada desta lista (use EXATAMENTE como está escrito):
+1. Descrever o que vocÃª vÃª na imagem (telas, erros, equipamentos, problemas visÃ­veis)
+2. Gerar um tÃ­tulo curto (atÃ© 80 caracteres) baseado no problema identificado
+3. Criar uma descriÃ§Ã£o detalhada incluindo o que foi observado na imagem
+4. ESCOLHER a categoria mais adequada desta lista (use EXATAMENTE como estÃ¡ escrito):
 
-CATEGORIAS DISPONÍVEIS:
+CATEGORIAS DISPONÃVEIS:
 - ${categoriesText}
 
-Considere a imagem como evidência principal do problema relatado.`;
+Considere a imagem como evidÃªncia principal do problema relatado.`;
     } else {
       prompt += `Analise a mensagem e:
-1. Gere um título curto (até 80 caracteres)
-2. Crie uma descrição detalhada
-3. ESCOLHA a categoria mais adequada desta lista (use EXATAMENTE como está escrito):
+1. Gere um tÃ­tulo curto (atÃ© 80 caracteres)
+2. Crie uma descriÃ§Ã£o detalhada
+3. ESCOLHA a categoria mais adequada desta lista (use EXATAMENTE como estÃ¡ escrito):
 
-CATEGORIAS DISPONÍVEIS:
+CATEGORIAS DISPONÃVEIS:
 - ${categoriesText}`;
     }
 
@@ -1010,7 +1010,7 @@ Responda APENAS em JSON com o formato:
   "category": "categoria exata da lista"
 }
 
-Use um tom profissional e claro em português.`;
+Use um tom profissional e claro em portuguÃªs.`;
 
     if (messageText) {
       prompt += `\n\nTexto da mensagem: """${sanitizedMessage}"""`;
@@ -1021,7 +1021,7 @@ Use um tom profissional e claro em português.`;
     // Adiciona o prompt de texto
     parts.push({ text: prompt });
 
-    // Adiciona imagem se disponível
+    // Adiciona imagem se disponÃ­vel
     if (imageData) {
       try {
         const base64Image = await this.convertImageToBase64(imageData.element);
@@ -1032,9 +1032,9 @@ Use um tom profissional e claro em português.`;
           }
         });
       } catch (error) {
-        console.warn('Falha ao processar imagem, continuando só com texto:', error);
+        console.warn('Falha ao processar imagem, continuando sÃ³ com texto:', error);
         if (!messageText) {
-          throw new Error('Não foi possível processar a imagem e não há texto disponível');
+          throw new Error('NÃ£o foi possÃ­vel processar a imagem e nÃ£o hÃ¡ texto disponÃ­vel');
         }
       }
     }
@@ -1074,10 +1074,10 @@ Use um tom profissional e claro em português.`;
     if (!combinedText) {
       return {
         title: '',
-        description: sanitizedMessage || '[Imagem anexada - descrição não gerada]',
+        description: sanitizedMessage || '[Imagem anexada - descriÃ§Ã£o nÃ£o gerada]',
         category: null,
         categoryId: null,
-        notice: 'Não foi possível gerar sugestão automática. Conteúdo original carregado.',
+        notice: 'NÃ£o foi possÃ­vel gerar sugestÃ£o automÃ¡tica. ConteÃºdo original carregado.',
         source: 'gemini'
       };
     }
@@ -1091,7 +1091,7 @@ Use um tom profissional e claro em português.`;
     try {
       const parsed = JSON.parse(cleaned);
       
-      // Extrai categoria primária e secundária
+      // Extrai categoria primÃ¡ria e secundÃ¡ria
       let categoryId = null;
       let primaryCategory = null;
       let secondaryCategory = null;
@@ -1099,7 +1099,7 @@ Use um tom profissional e claro em português.`;
       if (parsed.category && MILVUS_CATEGORIES[parsed.category]) {
         categoryId = MILVUS_CATEGORIES[parsed.category];
         
-        // Separa categoria primária | secundária
+        // Separa categoria primÃ¡ria | secundÃ¡ria
         if (parsed.category.includes(' | ')) {
           const parts = parsed.category.split(' | ');
           primaryCategory = parts[0].trim();
@@ -1111,7 +1111,7 @@ Use um tom profissional e claro em português.`;
       
       return {
         title: typeof parsed.title === 'string' ? parsed.title.trim() : '',
-        description: typeof parsed.description === 'string' ? parsed.description.trim() : (sanitizedMessage || '[Imagem anexada - descrição não gerada]'),
+        description: typeof parsed.description === 'string' ? parsed.description.trim() : (sanitizedMessage || '[Imagem anexada - descriÃ§Ã£o nÃ£o gerada]'),
         category: parsed.category,
         categoryId: categoryId,
         primaryCategory: primaryCategory,
@@ -1119,13 +1119,13 @@ Use um tom profissional e claro em português.`;
         source: 'gemini'
       };
     } catch (error) {
-      console.warn('Não foi possível interpretar resposta da Gemini como JSON. Texto bruto:', combinedText);
+      console.warn('NÃ£o foi possÃ­vel interpretar resposta da Gemini como JSON. Texto bruto:', combinedText);
       return {
         title: '',
-        description: sanitizedMessage || '[Imagem anexada - descrição não gerada]',
+        description: sanitizedMessage || '[Imagem anexada - descriÃ§Ã£o nÃ£o gerada]',
         category: null,
         categoryId: null,
-        notice: 'Sugestão recebida em formato inesperado. Conteúdo original carregado.',
+        notice: 'SugestÃ£o recebida em formato inesperado. ConteÃºdo original carregado.',
         source: 'gemini'
       };
     }
@@ -1136,19 +1136,19 @@ Use um tom profissional e claro em português.`;
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
 
     const ticketInfo = context.ticketId ? `#${context.ticketId}` : 'desconhecido';
-    const contactInfo = context.contactName ? context.contactName : (context.contactPhone || 'Contato não identificado');
+    const contactInfo = context.contactName ? context.contactName : (context.contactPhone || 'Contato nÃ£o identificado');
 
-    const prompt = `Atue como um analista de suporte técnico experiente. Reescreva o comentário abaixo em português, mantendo todas as informações essenciais, mas deixando o texto claro, objetivo e profissional. Não inclua saudações nem repita informações já implícitas. Se faltar contexto, apenas organize melhor o que já existe.
+    const prompt = `Atue como um analista de suporte tÃ©cnico experiente. Reescreva o comentÃ¡rio abaixo em portuguÃªs, mantendo todas as informaÃ§Ãµes essenciais, mas deixando o texto claro, objetivo e profissional. NÃ£o inclua saudaÃ§Ãµes nem repita informaÃ§Ãµes jÃ¡ implÃ­citas. Se faltar contexto, apenas organize melhor o que jÃ¡ existe.
 
 Contexto:
 - Chamado: ${ticketInfo}
 - Contato: ${contactInfo}
 
-Comente somente o necessário para registrar o andamento ou comunicação com o cliente.
+Comente somente o necessÃ¡rio para registrar o andamento ou comunicaÃ§Ã£o com o cliente.
 
 Retorne APENAS em JSON com o formato {"comment":"texto refinado"}.
 
-Comentário original: """${sanitizedComment}"""`;
+ComentÃ¡rio original: """${sanitizedComment}"""`;
 
     const payload = {
       contents: [
@@ -1199,35 +1199,35 @@ Comentário original: """${sanitizedComment}"""`;
       const refined = typeof parsed.comment === 'string' ? parsed.comment.trim() : '';
       return refined || sanitizedComment;
     } catch (error) {
-      console.warn('Não foi possível interpretar resposta da Gemini para comentário. Texto bruto:', combinedText);
+      console.warn('NÃ£o foi possÃ­vel interpretar resposta da Gemini para comentÃ¡rio. Texto bruto:', combinedText);
       return sanitizedComment;
     }
   }
 
   addToolbarButton() {
-    console.log('🔘 Tentando adicionar botão no toolbar...');
     
-    // Remove botão existente se houver
+    
+    // Remove botÃ£o existente se houver
     document.getElementById('ti-toolbar-btn')?.remove();
 
-    // Usa o header salvo (da conversa, não da lista)
+    // Usa o header salvo (da conversa, nÃ£o da lista)
     const chatHeader = this.getChatHeader();
 
     if (!chatHeader) {
-      console.error('❌ Header da conversa não encontrado');
+      console.error('âŒ Header da conversa nÃ£o encontrado');
       return;
     }
 
-    console.log('📍 Usando header da conversa:', chatHeader);
+    
 
-    // Tenta múltiplos seletores para encontrar o container de botões
+    // Tenta mÃºltiplos seletores para encontrar o container de botÃµes
     const headerButtons = chatHeader.querySelector('div[role="button"]')?.parentElement ||
                          chatHeader.querySelector('[aria-label]')?.parentElement ||
                          chatHeader.querySelector('button')?.parentElement ||
                          chatHeader.lastElementChild;
 
     if (headerButtons) {
-      console.log('✅ Container de botões encontrado');
+      
       
       const button = document.createElement('div');
       button.id = 'ti-toolbar-btn';
@@ -1241,20 +1241,20 @@ Comentário original: """${sanitizedComment}"""`;
         </button>
       `;
       button.addEventListener('click', () => {
-        console.log('🖱️ Botão clicado!');
+        
         this.togglePanel();
       });
       
       headerButtons.appendChild(button);
-      console.log('✅ Botão adicionado com sucesso no header DA CONVERSA!');
+      
     } else {
-      console.error('❌ Container de botões não encontrado no header');
-      console.log('📋 Estrutura do header:', chatHeader.innerHTML.substring(0, 200));
+      console.error('âŒ Container de botÃµes nÃ£o encontrado no header');
+      
     }
   }
 
   ensureToolbarButton() {
-    // Não faz nada - painel agora é fixo, sem necessidade de botão
+    // NÃ£o faz nada - painel agora Ã© fixo, sem necessidade de botÃ£o
     return;
   }
 
@@ -1272,90 +1272,86 @@ Comentário original: """${sanitizedComment}"""`;
     this.panelVisible = show !== null ? show : !this.panelVisible;
     
     if (this.panelVisible) {
-      console.log('📂 Abrindo painel...');
+      
       
       panel.classList.remove('hidden');
       document.body.classList.remove('ti-panel-hidden');
       
-      // Força recalculo do layout após pequeno delay
+      // ForÃ§a recalculo do layout apÃ³s pequeno delay
       setTimeout(() => {
         window.dispatchEvent(new Event('resize'));
       }, 50);
       
-      // Limpa APENAS os tickets (mantém contato e telefone)
-      console.log('🧹 Limpando cache de tickets (mantendo informações do contato)...');
+      // Limpa APENAS os tickets (mantÃ©m contato e telefone)
+      
       this.tickets = [];
       
       const shouldLoadTickets = !this.suppressNextTicketLoad;
       this.suppressNextTicketLoad = false;
 
-      // Aguarda painel abrir, então verifica se tem contato e carrega tickets
+      // Aguarda painel abrir, entÃ£o verifica se tem contato e carrega tickets
       setTimeout(() => {
-        console.log('🔍 Verificando contato atual ao abrir painel...');
         
-        // Se não tem contato detectado, força detecção
+        
+        // Se nÃ£o tem contato detectado, forÃ§a detecÃ§Ã£o
         if (!this.currentPhone) {
-          console.log('⚠️ Contato não detectado, forçando detecção...');
+          
           this.detectContactChange();
         } else {
-          console.log('✅ Contato já detectado:', { nome: this.currentContact, tel: this.currentPhone });
+          
           this.updateContactInfo();
         }
         
         // Carrega tickets se houver telefone
         if (this.currentPhone && shouldLoadTickets) {
-          console.log('📥 Carregando tickets...');
+          
           this.loadTickets();
         } else if (this.currentPhone && !shouldLoadTickets) {
-          console.log('🛑 Carregamento automático de tickets suprimido para formulário rápido.');
+          
         } else {
-          console.log('⏳ Aguardando detecção de telefone...');
+          
         }
       }, 100);
       
     } else {
-      console.log('📁 Fechando painel...');
+      
       
       panel.classList.add('hidden');
       document.body.classList.add('ti-panel-hidden');
       
-      // Força recalculo do layout
+      // ForÃ§a recalculo do layout
       setTimeout(() => {
         window.dispatchEvent(new Event('resize'));
       }, 50);
       
-      // Garante que o botão permanece visível
+      // Garante que o botÃ£o permanece visÃ­vel
       setTimeout(() => {
-        console.log('🔘 Verificando botão após fechar painel...');
+        
         this.ensureToolbarButton();
       }, 150);
     }
   }
 
   async detectContactChange() {
-    console.log('🔍 === INÍCIO detectContactChange() ===');
-    console.log('💾 Estado atual - Contact:', this.currentContact, '| Phone:', this.currentPhone, '| Tickets:', this.tickets.length);
+    
+    
     
     const headerElement = this.getChatHeader();
     const conversationPanel = document.querySelector('[data-testid="conversation-panel-messages"]') ||
                               document.querySelector('[data-testid="conversation-panel"]') ||
                               document.querySelector('[data-testid="conversation-panel-body"]');
     
-    // Extrai número de telefone PRIMEIRO (mais confiável que header)
+    // Extrai nÃºmero de telefone PRIMEIRO (mais confiÃ¡vel que header)
     const phone = this.extractPhoneNumber();
     
     const hasConversation = !!phone || !!headerElement || !!conversationPanel;
-    console.log('🧭 Estado da conversa:', {
-      headerEncontrado: !!headerElement,
-      painelEncontrado: !!conversationPanel,
-      telefoneDetectado: phone
-    });
+    
     
     if (!hasConversation) {
-      console.log('📭 Nenhuma conversa ativa no momento');
+      
       
       if (this.currentContact || this.currentPhone || this.tickets.length > 0) {
-        console.log('🧹 Limpando dados do contato anterior');
+        
         this.currentContact = null;
         this.currentPhone = null;
         this.tickets = [];
@@ -1380,33 +1376,33 @@ Comentário original: """${sanitizedComment}"""`;
         return;
       }
 
-      console.warn('⚠️ Não foi possível detectar o telefone após múltiplas tentativas');
+      console.warn('âš ï¸ NÃ£o foi possÃ­vel detectar o telefone apÃ³s mÃºltiplas tentativas');
     } else {
       this.pendingPhoneRetryCount = 0;
     }
     
-    // Extrai nome do contato - tenta múltiplos seletores
+    // Extrai nome do contato - tenta mÃºltiplos seletores
     let contactName = '';
     let shouldRetryName = false;
     
-    console.log('👤 Iniciando extração de nome do contato...');
     
-    // SOLUÇÃO DEFINITIVA: SEMPRE re-buscar header (nunca usar cache/parâmetro)
+    
+    // SOLUÃ‡ÃƒO DEFINITIVA: SEMPRE re-buscar header (nunca usar cache/parÃ¢metro)
     const header = document.querySelector('header[data-testid="conversation-header"]') ||
                    document.querySelector('#main header') ||
                    document.querySelector('div[data-testid="conversation-header"] header') ||
                    document.querySelector('div[data-testid="conversation-header"]');
     
     if (header) {
-      console.log('📋 Header encontrado, buscando nome...');
       
-      // MÉTODO DEFINITIVO: Buscar o span de nome usando a estrutura conhecida
       
-      // 1. Buscar pelo atributo title (mais confiável - contém nome completo)
+      // MÃ‰TODO DEFINITIVO: Buscar o span de nome usando a estrutura conhecida
+      
+      // 1. Buscar pelo atributo title (mais confiÃ¡vel - contÃ©m nome completo)
       const spanWithTitle = header.querySelector('span[dir="auto"][title]');
       if (spanWithTitle?.title) {
         contactName = spanWithTitle.title.trim();
-        console.log('✅ Nome extraído de span[title]:', contactName);
+        
       }
       
       const invalidPatterns = [
@@ -1430,22 +1426,22 @@ Comentário original: """${sanitizedComment}"""`;
         return !invalidPatterns.some(pattern => pattern.test(normalized));
       };
 
-      // 2. Buscar no container principal de informações
+      // 2. Buscar no container principal de informaÃ§Ãµes
       if (!contactName) {
         const headerContent = header.querySelector('div[role="button"]');
         if (headerContent) {
-          // Pega TODOS os spans, filtra os que têm texto válido
+          // Pega TODOS os spans, filtra os que tÃªm texto vÃ¡lido
           const allSpans = Array.from(headerContent.querySelectorAll('span[dir="auto"]'));
-          console.log('🔎 Spans encontrados no botão:', allSpans.length);
+          
           
           for (const span of allSpans) {
             const text = span.textContent?.trim();
-            console.log('  → Span text:', text);
+            
             if (!isValidNameText(text)) continue;
 
             const candidate = text.trim();
             contactName = candidate;
-            console.log('✅ Nome extraído de span válido:', contactName);
+            
             break;
           }
         }
@@ -1458,7 +1454,7 @@ Comentário original: """${sanitizedComment}"""`;
           const text = anySpan.textContent.trim();
           if (isValidNameText(text)) {
             contactName = text;
-            console.log('✅ Nome extraído de anySpan (fallback):', contactName);
+            
           }
         }
       }
@@ -1466,7 +1462,7 @@ Comentário original: """${sanitizedComment}"""`;
       // 4. Fallback final: analisar texto bruto do header
       if (!contactName) {
         const headerText = (header.innerText || header.textContent || '').trim();
-        console.log('🧾 headerText:', headerText);
+        
         if (headerText) {
           const candidates = headerText
             .split('\n')
@@ -1475,67 +1471,67 @@ Comentário original: """${sanitizedComment}"""`;
 
           if (candidates.length > 0) {
             contactName = candidates[0];
-            console.log('✅ Nome extraído de headerText:', contactName);
+            
           }
         }
       }
       
       if (!contactName) {
         shouldRetryName = true;
-        console.log('⚠️ Nenhum elemento de nome encontrado no header');
+        
       }
       
       // Atualiza cache do header
       this.chatHeader = header;
     } else {
       shouldRetryName = true;
-      console.log('❌ Header não encontrado');
+      
     }
 
-    // Método 2: Busca no chat selecionado da lista lateral
+    // MÃ©todo 2: Busca no chat selecionado da lista lateral
     if (!contactName) {
-      console.log('🔍 Tentando método 2: lista lateral...');
+      
       const selectedChat = document.querySelector('[data-testid="cell-frame-container"][aria-selected="true"]') ||
                             document.querySelector('[data-testid="conversation-list-item"][aria-selected="true"]');
       if (selectedChat) {
         const selectedTitle = selectedChat.getAttribute('title');
         if (selectedTitle) {
           contactName = selectedTitle.trim();
-          console.log('✅ Nome extraído da lista lateral (title):', contactName);
+          
         } else {
           const possibleNames = Array.from(selectedChat.querySelectorAll('span[dir="auto"]'))
             .map(span => span.textContent?.trim())
             .filter(text => text && text.length > 0 && !/\d{6,}/.test(text));
           if (possibleNames.length > 0) {
             contactName = possibleNames[0];
-            console.log('✅ Nome extraído da lista lateral (span):', contactName);
+            
           }
         }
       }
     }
 
-    // Método 3: Busca em atributos do header
+    // MÃ©todo 3: Busca em atributos do header
     if (!contactName && header) {
-      console.log('🔍 Tentando método 3: aria-label...');
+      
       const ariaLabel = header.getAttribute('aria-label');
       if (ariaLabel) {
         contactName = ariaLabel.split(',')[0]?.trim() || '';
-        console.log('✅ Nome extraído de aria-label:', contactName);
+        
       }
     }
 
-    // Método 4: Se não encontrou nome ou pegou um número, usa fallback
+    // MÃ©todo 4: Se nÃ£o encontrou nome ou pegou um nÃºmero, usa fallback
     const nameLooksLikePhone = contactName && (/^\+?\d+$/.test(contactName) || /^Contato \(/.test(contactName));
     if (!contactName || nameLooksLikePhone) {
-      console.log('⚠️ Nome não encontrado ou parece número, usando fallback...');
+      
       if (phone) {
         contactName = `Contato (${phone})`;
         shouldRetryName = true;
-        console.log('📝 Fallback: Contato (' + phone + ')');
+        
       } else {
         contactName = 'Contato sem nome';
         shouldRetryName = true;
-        console.log('📝 Fallback: Contato sem nome');
+        
       }
     }
 
@@ -1544,49 +1540,49 @@ Comentário original: """${sanitizedComment}"""`;
       shouldRetryName = false;
     }
 
-    console.log('✅ Nome final extraído:', contactName);
-    console.log('🔍 Contato detectado:', { contactName, phone });
-    console.log('📊 Estado anterior:', { currentContact: this.currentContact, currentPhone: this.currentPhone });
+    
+    
+    
 
     // SEMPRE atualiza se o telefone mudou (mesmo que o nome seja igual)
     const phoneChanged = phone && phone !== this.currentPhone;
     const contactChanged = contactName && contactName !== this.currentContact;
 
     if (phoneChanged || contactChanged) {
-      console.log('🔄 ⚠️ MUDANÇA DE CONTATO DETECTADA!');
-      console.log('   📱 Anterior:', { nome: this.currentContact, tel: this.currentPhone });
-      console.log('   📱 Novo:', { nome: contactName, tel: phone });
-      console.log('   🔍 phoneChanged:', phoneChanged, '| contactChanged:', contactChanged);
+      
+      
+      
+      
       
       // Atualiza PRIMEIRO o estado
       this.currentContact = contactName;
       this.currentPhone = phone;
       
-      console.log('💾 Estado atualizado para:', { currentContact: this.currentContact, currentPhone: this.currentPhone });
+      
       
       // Limpa cache de chamados ao mudar de contato
-      console.log('🧹 Limpando cache: this.tickets = []');
+      
       this.tickets = [];
       
-      // SEMPRE atualiza as informações do contato no painel
-      console.log('🔄 Chamando updateContactInfo()...');
+      // SEMPRE atualiza as informaÃ§Ãµes do contato no painel
+      
       this.updateContactInfo();
-      console.log('✅ updateContactInfo() executado');
+      
       
       // Se o painel estiver aberto, recarrega os chamados automaticamente
       if (this.panelVisible) {
-        console.log('📥 Painel aberto! Carregando chamados do novo contato...');
+        
         this.loadTickets();
       } else {
-        console.log('📁 Painel fechado. Informações atualizadas, tickets serão carregados ao abrir.');
+        
       }
     } else if (this.currentContact && this.currentPhone) {
-      // Mesmo sem mudança, SEMPRE atualiza o display
-      console.log('ℹ️ Mesmo contato detectado. Forçando atualização do display...');
+      // Mesmo sem mudanÃ§a, SEMPRE atualiza o display
+      
       this.updateContactInfo();
-      console.log('✅ Display atualizado.');
+      
     } else {
-      console.log('⏳ Aguardando detecção de contato...');
+      
     }
 
     if (shouldRetryName && this.pendingNameRetryCount < 6) {
@@ -1596,25 +1592,25 @@ Comentário original: """${sanitizedComment}"""`;
       this.pendingNameRetryCount = 0;
     }
 
-    // Configura ações em mensagens ao confirmar conversa ativa
+    // Configura aÃ§Ãµes em mensagens ao confirmar conversa ativa
     this.setupMessageActions();
 
-    // Reforça a presença do botão no header
+    // ReforÃ§a a presenÃ§a do botÃ£o no header
     this.ensureToolbarButton();
   }
 
   extractPhoneNumber() {
-    console.log('📞 Tentando extrair telefone...');
     
-    // Método 1: Extrair da URL (MAIS CONFIÁVEL)
+    
+    // MÃ©todo 1: Extrair da URL (MAIS CONFIÃVEL)
     const urlMatch = window.location.href.match(/\/(\d+)@/);
     if (urlMatch) {
       const phone = urlMatch[1];
-      console.log('✅ Telefone extraído da URL:', phone);
+      
       return phone;
     }
     
-    // Método 2: Buscar em elementos com data-id DENTRO da área principal
+    // MÃ©todo 2: Buscar em elementos com data-id DENTRO da Ã¡rea principal
     const mainArea = document.querySelector('[role="main"]') || document.querySelector('#main');
     const elementsWithDataId = mainArea ? mainArea.querySelectorAll('[data-id]') : [];
     for (let element of elementsWithDataId) {
@@ -1622,13 +1618,13 @@ Comentário original: """${sanitizedComment}"""`;
       if (dataId && dataId.includes('@')) {
         const match = dataId.match(/(\d+)@/);
         if (match && match[1].length >= 10) {
-          console.log('✅ Telefone extraído de data-id:', match[1]);
+          
           return match[1];
         }
       }
     }
     
-    // Método 3: Buscar no header da conversa
+    // MÃ©todo 3: Buscar no header da conversa
     const header = document.querySelector('[role="main"] header') || 
                    document.querySelector('header[data-testid="conversation-header"]');
     
@@ -1637,13 +1633,13 @@ Comentário original: """${sanitizedComment}"""`;
       if (dataId) {
         const match = dataId.match(/(\d+)@/);
         if (match) {
-          console.log('✅ Telefone extraído do header:', match[1]);
+          
           return match[1];
         }
       }
     }
     
-    // Método 4: Buscar na área de mensagens
+    // MÃ©todo 4: Buscar na Ã¡rea de mensagens
     const messagesArea = document.querySelector('[data-testid="conversation-panel-messages"]');
     if (messagesArea) {
       const parent = messagesArea.closest('[data-id]');
@@ -1651,86 +1647,86 @@ Comentário original: """${sanitizedComment}"""`;
         const dataId = parent.getAttribute('data-id');
         const match = dataId?.match(/(\d+)@/);
         if (match) {
-          console.log('✅ Telefone extraído da área de mensagens:', match[1]);
+          
           return match[1];
         }
       }
     }
     
-    // Método 5: Última tentativa - buscar em span com título
+    // MÃ©todo 5: Ãšltima tentativa - buscar em span com tÃ­tulo
     const titleSpan = document.querySelector('[role="main"] span[title]');
     if (titleSpan) {
       const title = titleSpan.getAttribute('title');
       const phoneMatch = title?.match(/\d{10,15}/);
       if (phoneMatch) {
-        console.log('✅ Telefone extraído do título:', phoneMatch[0]);
+        
         return phoneMatch[0];
       }
     }
     
-    console.warn('⚠️ Não foi possível extrair o telefone');
-    console.log('💡 URL atual:', window.location.href);
-    console.log('💡 Elementos com data-id encontrados:', elementsWithDataId.length);
+    console.warn('âš ï¸ NÃ£o foi possÃ­vel extrair o telefone');
+    
+    
     return null;
   }
 
   updateContactInfo() {
-    console.log('🔄 === updateContactInfo() INICIADO ===');
-    console.log('📊 Estado atual:', { currentContact: this.currentContact, currentPhone: this.currentPhone });
+    
+    
     
     const infoDiv = document.getElementById('ti-contact-info');
     if (!infoDiv) {
-      console.error('❌ Elemento ti-contact-info não encontrado!');
+      console.error('âŒ Elemento ti-contact-info nÃ£o encontrado!');
       return;
     }
 
     if (this.currentContact && this.currentPhone) {
       infoDiv.classList.remove('hidden');
       
-      // Garante que mostra o NOME no campo de contato (não o número)
+      // Garante que mostra o NOME no campo de contato (nÃ£o o nÃºmero)
       const contactName = this.currentContact;
       
-      console.log('📝 Atualizando display com:', contactName);
       
-      // Se o nome for do tipo "Contato (número)", exibe mensagem apropriada
+      
+      // Se o nome for do tipo "Contato (nÃºmero)", exibe mensagem apropriada
       if (contactName.startsWith('Contato (')) {
         infoDiv.querySelector('.ti-contact-name').textContent = 'Sem nome salvo';
-        console.log('ℹ️ Display: Sem nome salvo');
+        
       } else {
         infoDiv.querySelector('.ti-contact-name').textContent = contactName;
-        console.log('✅ Display: Nome =', contactName);
+        
       }
       
       infoDiv.querySelector('.ti-contact-phone').textContent = `Tel: ${this.currentPhone}`;
-      console.log('✅ Display: Tel =', this.currentPhone);
+      
     } else {
       // Nenhum contato selecionado
       infoDiv.classList.remove('hidden');
-      infoDiv.querySelector('.ti-contact-name').textContent = '📭 Nenhuma conversa selecionada';
+      infoDiv.querySelector('.ti-contact-name').textContent = 'ðŸ“­ Nenhuma conversa selecionada';
       infoDiv.querySelector('.ti-contact-phone').textContent = 'Abra um chat para visualizar tickets';
-      console.log('ℹ️ Display: Nenhuma conversa selecionada');
+      
     }
     
-    console.log('✅ === updateContactInfo() CONCLUÍDO ===');
+    
   }
 
   async loadTickets() {
-    console.log('🔄 === INÍCIO loadTickets() ===');
-    console.log('📱 this.currentPhone:', this.currentPhone);
-    console.log('👤 this.currentContact:', this.currentContact);
-    console.log('📊 this.tickets.length:', this.tickets.length);
+    
+    
+    
+    
     
     const listDiv = document.getElementById('ti-tickets-list');
     if (!listDiv) {
-      console.error('❌ Elemento ti-tickets-list não encontrado!');
+      console.error('âŒ Elemento ti-tickets-list nÃ£o encontrado!');
       return;
     }
     
     if (!this.currentPhone) {
-      console.warn('⚠️ Telefone não identificado');
+      console.warn('âš ï¸ Telefone nÃ£o identificado');
       listDiv.innerHTML = `
         <div class="ti-empty-state">
-          <div class="ti-empty-icon">📭</div>
+          <div class="ti-empty-icon">ðŸ“­</div>
           <div class="ti-empty-title">Nenhuma conversa selecionada</div>
           <div class="ti-empty-message">Abra um chat para visualizar os tickets</div>
         </div>
@@ -1738,14 +1734,14 @@ Comentário original: """${sanitizedComment}"""`;
       return;
     }
 
-    listDiv.innerHTML = '<div class="ti-loading">🔍 Buscando chamados...</div>';
+    listDiv.innerHTML = '<div class="ti-loading">ðŸ” Buscando chamados...</div>';
 
     try {
-      // Remove +55 ou 55 do início do telefone usando função auxiliar
+      // Remove +55 ou 55 do inÃ­cio do telefone usando funÃ§Ã£o auxiliar
       const cleanPhone = this.cleanPhoneForAPI(this.currentPhone);
 
-      console.log('📞 Telefone original:', this.currentPhone);
-      console.log('📞 Telefone limpo para API (sem 55):', cleanPhone);
+      
+      
 
       // Faz chamada para API Milvus - listagem de chamados
       const bodyPayload = {
@@ -1755,10 +1751,7 @@ Comentário original: """${sanitizedComment}"""`;
         }
       };
 
-      console.log('📤 Enviando para API Milvus:', {
-        url: `${API_BASE_URL}/chamado/listagem?total_registros=50`,
-        body: bodyPayload
-      });
+      
 
       const response = await fetch(`${API_BASE_URL}/chamado/listagem?total_registros=50`, {
         method: 'POST',
@@ -1769,18 +1762,18 @@ Comentário original: """${sanitizedComment}"""`;
         body: JSON.stringify(bodyPayload)
       });
       
-      console.log('📥 Resposta da API:', response.status, response.statusText);
+      
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ Erro na API:', errorText);
+        console.error('âŒ Erro na API:', errorText);
         throw new Error(`Erro ${response.status}: ${response.statusText}`);
       }
       
       const data = await response.json();
-      console.log('📦 Dados recebidos:', data);
       
-      // Adapta formato Milvus para o formato da extensão
+      
+      // Adapta formato Milvus para o formato da extensÃ£o
       const tickets = data.lista ? data.lista.map(ticket => ({
         id: ticket.codigo,
         title: ticket.assunto,
@@ -1797,40 +1790,35 @@ Comentário original: """${sanitizedComment}"""`;
         lastLog: ticket.ultima_log
       })) : [];
       
-      console.log(`✅ ${tickets.length} chamado(s) encontrado(s) para telefone ${cleanPhone}`);
-      console.log('📋 Tickets processados:', tickets);
       
-      // VALIDAÇÃO APENAS POR NÚMERO (sem nome)
+      
+      
+      // VALIDAÃ‡ÃƒO APENAS POR NÃšMERO (sem nome)
       const normalizedCurrentPhone = this.cleanPhoneForAPI(this.currentPhone);
-      console.log('🔎 Telefone atual normalizado (sem 55):', normalizedCurrentPhone);
+      
 
       const filteredTickets = tickets.filter(ticket => {
         const normalizedTicketPhone = this.cleanPhoneForAPI(ticket.contactPhone);
         const phoneMatches = normalizedTicketPhone === normalizedCurrentPhone;
 
         if (!phoneMatches) {
-          console.log('❌ Descartando ticket com telefone diferente:', {
-            id: ticket.id,
-            ticketPhone: ticket.contactPhone,
-            normalizedTicketPhone,
-            currentPhone: normalizedCurrentPhone
-          });
+          
         }
 
         return phoneMatches; // Valida APENAS por telefone
       });
 
-      console.log(`🎯 ${filteredTickets.length} chamado(s) após filtro por telefone`);
-      console.log('📋 Tickets após filtro:', filteredTickets);
+      
+      
 
       this.tickets = filteredTickets;
-      console.log('�💾 Cache atualizado. this.tickets.length =', this.tickets.length);
+      
       
       this.renderTickets(filteredTickets);
       
-      // Mensagem quando não encontrar nada
+      // Mensagem quando nÃ£o encontrar nada
       if (filteredTickets.length === 0) {
-        console.log('📭 Renderizando estado vazio para:', cleanPhone);
+        
         listDiv.innerHTML = `
           <div class="ti-empty">
             <p style="margin: 0; font-size: 14px; color: #667781;">Nenhum chamado em aberto</p>
@@ -1839,16 +1827,16 @@ Comentário original: """${sanitizedComment}"""`;
         `;
       }
     } catch (error) {
-      console.error('❌ Erro ao carregar chamados:', error);
+      console.error('âŒ Erro ao carregar chamados:', error);
       listDiv.innerHTML = `
         <div class="ti-error">
-          <p>❌ Erro ao carregar chamados</p>
+          <p>âŒ Erro ao carregar chamados</p>
           <small>${error.message}</small>
           <button onclick="document.querySelector('#ti-refresh-tickets').click()" 
                   style="margin-top: 8px; padding: 6px 12px; background: #00a884; color: white; border: none; border-radius: 4px; cursor: pointer;">
-            🔄 Tentar novamente
+            ðŸ”„ Tentar novamente
           </button>
-          <p class="ti-hint" style="margin-top: 8px; font-size: 12px; color: #8696a0;">Verifique se o token de autenticação está configurado</p>
+          <p class="ti-hint" style="margin-top: 8px; font-size: 12px; color: #8696a0;">Verifique se o token de autenticaÃ§Ã£o estÃ¡ configurado</p>
         </div>
       `;
     }
@@ -1858,9 +1846,9 @@ Comentário original: """${sanitizedComment}"""`;
     const listDiv = document.getElementById('ti-tickets-list');
     if (!listDiv) return;
 
-    console.log(`🎨 Renderizando ${tickets.length} tickets no DOM...`);
     
-    // SEMPRE limpa o conteúdo anterior para evitar cache visual
+    
+    // SEMPRE limpa o conteÃºdo anterior para evitar cache visual
     listDiv.innerHTML = '';
 
     if (tickets.length === 0) {
@@ -1874,7 +1862,7 @@ Comentário original: """${sanitizedComment}"""`;
           <span class="ti-ticket-id">#${ticket.id}</span>
           <span class="ti-ticket-status ti-status-${ticket.status}">${this.getStatusLabel(ticket.status)}</span>
         </div>
-        <div class="ti-ticket-title">${ticket.title || 'Sem título'}</div>
+        <div class="ti-ticket-title">${ticket.title || 'Sem tÃ­tulo'}</div>
         <div class="ti-ticket-meta">
           <span>Criado em: ${this.formatDate(ticket.createdAt)}</span>
           ${ticket.priority ? `<span class="ti-priority ti-priority-${ticket.priority}">${this.getPriorityLabel(ticket.priority)}</span>` : ''}
@@ -1889,7 +1877,7 @@ Comentário original: """${sanitizedComment}"""`;
 
     listDiv.innerHTML = ticketsHtml;
 
-    // Adiciona event listeners aos botões
+    // Adiciona event listeners aos botÃµes
     listDiv.querySelectorAll('.ti-btn-view').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const ticketId = e.target.dataset.ticketId;
@@ -1929,11 +1917,11 @@ Comentário original: """${sanitizedComment}"""`;
       
       // Encontra o ticket na lista local
       const ticket = this.tickets.find(t => t.id == ticketId);
-      if (!ticket) throw new Error('Chamado não encontrado');
+      if (!ticket) throw new Error('Chamado nÃ£o encontrado');
       
-      // Extrai comentários dos acompanhamentos
+      // Extrai comentÃ¡rios dos acompanhamentos
       const comments = data.retorno ? data.retorno
-        .filter(log => log.log_tipo_id === 6 && !log.is_excluido) // Tipo 6 = comentários
+        .filter(log => log.log_tipo_id === 6 && !log.is_excluido) // Tipo 6 = comentÃ¡rios
         .map(log => ({
           id: log.data,
           author: log.pessoa || log.tecnico || 'Sistema',
@@ -1963,8 +1951,8 @@ Comentário original: """${sanitizedComment}"""`;
             <span>${ticket.title || 'Sem assunto'}</span>
           </div>
           <div class="ti-detail-row">
-            <label>Descrição:</label>
-            <p>${ticket.description || 'Sem descrição'}</p>
+            <label>DescriÃ§Ã£o:</label>
+            <p>${ticket.description || 'Sem descriÃ§Ã£o'}</p>
           </div>
           ${ticket.priority ? `
             <div class="ti-detail-row">
@@ -1974,7 +1962,7 @@ Comentário original: """${sanitizedComment}"""`;
           ` : ''}
           ${ticket.technician ? `
             <div class="ti-detail-row">
-              <label>Técnico:</label>
+              <label>TÃ©cnico:</label>
               <span>${ticket.technician}</span>
             </div>
           ` : ''}
@@ -2030,20 +2018,20 @@ Comentário original: """${sanitizedComment}"""`;
 
     const originalContent = listDiv.innerHTML;
 
-    // SEMPRE pega o contato ATUAL do estado, não do prefill
+    // SEMPRE pega o contato ATUAL do estado, nÃ£o do prefill
     const contactName = this.currentContact ?? prefill.contactName ?? '';
     const contactPhone = this.currentPhone ?? prefill.contactPhone ?? '';
     const originalMessage = prefill.originalMessage ?? '';
     const suggestionSource = prefill.source || '';
 
-    console.log('📝 Formulário - Contato atual:', contactName, '| Tel:', contactPhone);
+    
 
     const escape = (value) => this.escapeHTML(value ?? '');
     const contactInfoHtml = (contactName || contactPhone) ? `
       <div class="ti-ticket-context-contact">
         <span class="ti-context-label">Contato</span>
         <strong>${escape(contactName) || 'Sem nome salvo'}</strong>
-        <span class="ti-context-phone">${contactPhone ? escape(contactPhone) : 'Telefone não identificado'}</span>
+        <span class="ti-context-phone">${contactPhone ? escape(contactPhone) : 'Telefone nÃ£o identificado'}</span>
       </div>
     ` : '';
 
@@ -2051,13 +2039,13 @@ Comentário original: """${sanitizedComment}"""`;
       <div class="ti-ticket-context-message">
         <span class="ti-context-label">Mensagem selecionada</span>
         <p>${escape(originalMessage).replace(/\n/g, '<br>')}</p>
-        ${prefill.hasImage ? '<span class="ti-image-indicator">🖼️ Imagem anexada e analisada</span>' : ''}
+        ${prefill.hasImage ? '<span class="ti-image-indicator">ðŸ–¼ï¸ Imagem anexada e analisada</span>' : ''}
       </div>
     ` : '';
 
-    let badgeText = '✨ Sugestão gerada pela Gemini (título, descrição e categorias)';
+    let badgeText = 'âœ¨ SugestÃ£o gerada pela Gemini (tÃ­tulo, descriÃ§Ã£o e categorias)';
     if (prefill.hasImage && suggestionSource === 'gemini') {
-      badgeText = '🖼️ Sugestão gerada pela Gemini com análise de imagem';
+      badgeText = 'ðŸ–¼ï¸ SugestÃ£o gerada pela Gemini com anÃ¡lise de imagem';
     }
 
     const badgeHtml = suggestionSource === 'gemini' ? `
@@ -2081,16 +2069,16 @@ Comentário original: """${sanitizedComment}"""`;
             <input type="text" id="ti-ticket-title" required />
           </div>
           <div class="ti-form-group">
-            <label>Descrição *</label>
+            <label>DescriÃ§Ã£o *</label>
             <textarea id="ti-ticket-description" rows="4" required></textarea>
           </div>
           <div class="ti-form-group">
-            <label>Categoria Primária</label>
+            <label>Categoria PrimÃ¡ria</label>
             <input type="text" id="ti-ticket-cat1" placeholder="Ex: Hardware, Software" />
           </div>
           <div class="ti-form-group">
-            <label>Categoria Secundária</label>
-            <input type="text" id="ti-ticket-cat2" placeholder="Ex: Troca de peça, Instalação" />
+            <label>Categoria SecundÃ¡ria</label>
+            <input type="text" id="ti-ticket-cat2" placeholder="Ex: Troca de peÃ§a, InstalaÃ§Ã£o" />
           </div>
           <div class="ti-form-actions">
             <button type="submit" class="ti-btn ti-btn-primary">Criar Chamado</button>
@@ -2137,11 +2125,7 @@ Comentário original: """${sanitizedComment}"""`;
 
     // Se temos category ID, mostra nos logs
     if (prefill.categoryId) {
-      console.log('🏷️ Categoria sugerida pela IA:', {
-        id: prefill.categoryId,
-        primaria: prefill.primaryCategory,
-        secundaria: prefill.secondaryCategory
-      });
+      
     }
 
     setTimeout(() => {
@@ -2162,11 +2146,11 @@ Comentário original: """${sanitizedComment}"""`;
     const categoria2 = document.getElementById('ti-ticket-cat2')?.value;
 
     try {
-      // Limpa telefone removendo código do país (55)
+      // Limpa telefone removendo cÃ³digo do paÃ­s (55)
       const cleanPhone = this.cleanPhoneForAPI(this.currentPhone);
       
-      console.log('📞 Criando chamado - Tel original:', this.currentPhone);
-      console.log('📞 Criando chamado - Tel limpo (sem 55):', cleanPhone);
+      
+      
       
       // Cria chamado na API Milvus
       const payload = {
@@ -2174,7 +2158,7 @@ Comentário original: """${sanitizedComment}"""`;
         chamado_assunto: assunto,
         chamado_descricao: descricao,
         chamado_email: '',
-        chamado_telefone: cleanPhone, // Envia sem código do país
+        chamado_telefone: cleanPhone, // Envia sem cÃ³digo do paÃ­s
         chamado_contato: this.currentContact || 'WhatsApp',
       };
 
@@ -2182,7 +2166,7 @@ Comentário original: """${sanitizedComment}"""`;
       if (categoria1) payload.chamado_categoria_primaria = categoria1;
       if (categoria2) payload.chamado_categoria_secundaria = categoria2;
 
-      console.log('📤 Payload para criar chamado:', payload);
+      
 
       const response = await fetch(`${API_BASE_URL}/chamado/criar`, {
         method: 'POST',
@@ -2218,9 +2202,9 @@ Comentário original: """${sanitizedComment}"""`;
     const form = document.createElement('div');
     form.className = 'ti-comment-form';
     form.innerHTML = `
-      <textarea placeholder="Adicionar comentário..." rows="3"></textarea>
+      <textarea placeholder="Adicionar comentÃ¡rio..." rows="3"></textarea>
       <div class="ti-form-actions ti-comment-actions">
-        <button type="button" class="ti-btn-small ti-btn-gemini" title="Refinar comentário com ajuda da IA">✨ Refinar com Gemini</button>
+        <button type="button" class="ti-btn-small ti-btn-gemini" title="Refinar comentÃ¡rio com ajuda da IA">âœ¨ Refinar com Gemini</button>
         <button class="ti-btn-small ti-btn-primary">Enviar</button>
         <button class="ti-btn-small ti-btn-secondary">Cancelar</button>
       </div>
@@ -2241,19 +2225,19 @@ Comentário original: """${sanitizedComment}"""`;
       const originalText = textarea.value.trim();
 
       if (!originalText) {
-        this.showMessage('Digite algo antes de pedir ajuda à Gemini.', 'warning');
+        this.showMessage('Digite algo antes de pedir ajuda Ã  Gemini.', 'warning');
         textarea.focus();
         return;
       }
 
       if (!GEMINI_API_KEY) {
-        this.showMessage('Configure a chave da Gemini API nas configurações.', 'error');
+        this.showMessage('Configure a chave da Gemini API nas configuraÃ§Ãµes.', 'error');
         return;
       }
 
       btnGemini.disabled = true;
       const previousLabel = btnGemini.textContent;
-      btnGemini.textContent = '⏳ Refinando...';
+      btnGemini.textContent = 'â³ Refinando...';
 
       try {
         const refined = await this.generateCommentRefinement(originalText, {
@@ -2265,13 +2249,13 @@ Comentário original: """${sanitizedComment}"""`;
         if (refined) {
           textarea.value = refined;
           textarea.classList.add('ti-ai-filled');
-          this.showMessage('Comentário refinado pela Gemini. Revise antes de enviar.', 'success');
+          this.showMessage('ComentÃ¡rio refinado pela Gemini. Revise antes de enviar.', 'success');
         } else {
-          this.showMessage('A Gemini não conseguiu melhorar este comentário.', 'warning');
+          this.showMessage('A Gemini nÃ£o conseguiu melhorar este comentÃ¡rio.', 'warning');
         }
       } catch (error) {
-        console.error('Erro ao refinar comentário com Gemini:', error);
-        this.showMessage('Não foi possível refinar o comentário agora.', 'error');
+        console.error('Erro ao refinar comentÃ¡rio com Gemini:', error);
+        this.showMessage('NÃ£o foi possÃ­vel refinar o comentÃ¡rio agora.', 'error');
       } finally {
         btnGemini.disabled = false;
         btnGemini.textContent = previousLabel;
@@ -2322,7 +2306,7 @@ Comentário original: """${sanitizedComment}"""`;
 
     const cleanSubject = subject?.length ? subject : 'Sem assunto informado';
     const messageLines = [
-      'Chamado aberto! ✓',
+      'Chamado aberto! âœ“',
       `Ticket: *#${ticketCode}*`,
       `_Assunto: ${cleanSubject}_`,
       '',
@@ -2333,7 +2317,7 @@ Comentário original: """${sanitizedComment}"""`;
     const sent = await this.sendWhatsAppMessageToCurrentChat(message);
 
     if (!sent) {
-      this.showMessage('Chamado criado, mas não consegui enviar a confirmação no WhatsApp.', 'warning');
+      this.showMessage('Chamado criado, mas nÃ£o consegui enviar a confirmaÃ§Ã£o no WhatsApp.', 'warning');
     }
   }
 
@@ -2347,13 +2331,13 @@ Comentário original: """${sanitizedComment}"""`;
                        document.querySelector('#main footer div[contenteditable="true"]');
 
       if (!composer) {
-        console.warn('✉️ Campo de mensagem do WhatsApp não encontrado para envio automático.');
+        console.warn('âœ‰ï¸ Campo de mensagem do WhatsApp nÃ£o encontrado para envio automÃ¡tico.');
         return false;
       }
 
       composer.focus();
 
-      // Limpa conteúdo atual
+      // Limpa conteÃºdo atual
       document.execCommand('selectAll', false, null);
       document.execCommand('delete', false, null);
 
@@ -2397,15 +2381,15 @@ Comentário original: """${sanitizedComment}"""`;
                          document.querySelector('[data-testid="compose-btn-send"]');
 
       if (!sendButton) {
-        console.warn('🛑 Botão de enviar mensagem não encontrado.');
+        console.warn('ðŸ›‘ BotÃ£o de enviar mensagem nÃ£o encontrado.');
         return false;
       }
 
       sendButton.click();
-      console.log('💬 Mensagem automática enviada ao contato.');
+      
       return true;
     } catch (error) {
-      console.error('Erro ao enviar mensagem automática:', error);
+      console.error('Erro ao enviar mensagem automÃ¡tica:', error);
       return false;
     }
   }
@@ -2476,7 +2460,7 @@ Comentário original: """${sanitizedComment}"""`;
       closed: 'Fechado',
       paused: 'Pausado',
       scheduled: 'Agendado',
-      conference: 'Conferência'
+      conference: 'ConferÃªncia'
     };
     return labels[status] || status;
   }
@@ -2484,15 +2468,15 @@ Comentário original: """${sanitizedComment}"""`;
   getPriorityLabel(priority) {
     const labels = {
       low: 'Baixa',
-      medium: 'Média',
+      medium: 'MÃ©dia',
       high: 'Alta',
       urgent: 'Urgente',
-      critical: 'Crítico'
+      critical: 'CrÃ­tico'
     };
     return labels[priority] || priority;
   }
 
-  // Mapeia status do Milvus para formato da extensão
+  // Mapeia status do Milvus para formato da extensÃ£o
   mapMilvusStatus(status) {
     const statusMap = {
       'AgAtendimento': 'open',
@@ -2500,20 +2484,20 @@ Comentário original: """${sanitizedComment}"""`;
       'Atendendo': 'in_progress',
       'Pausado': 'paused',
       'Finalizado': 'closed',
-      'Conferência': 'conference',
+      'ConferÃªncia': 'conference',
       'Agendado': 'scheduled',
       'Expirado': 'closed',
-      'Ag. solução': 'pending'
+      'Ag. soluÃ§Ã£o': 'pending'
     };
     return statusMap[status] || 'open';
   }
 
-  // Mapeia prioridade do Milvus para formato da extensão
+  // Mapeia prioridade do Milvus para formato da extensÃ£o
   mapMilvusPriority(prioridade) {
     const priorityMap = {
-      'Crítico': 'critical',
+      'CrÃ­tico': 'critical',
       'Alta': 'high',
-      'Média': 'medium',
+      'MÃ©dia': 'medium',
       'Baixa': 'low',
       'Urgente': 'urgent'
     };
@@ -2532,23 +2516,23 @@ Comentário original: """${sanitizedComment}"""`;
     });
   }
 
-  // Remove código do país (55) do telefone para enviar à API
+  // Remove cÃ³digo do paÃ­s (55) do telefone para enviar Ã  API
   cleanPhoneForAPI(phone) {
     if (!phone) return '';
     
-    let clean = phone.replace(/\D/g, ''); // Remove tudo que não é dígito
+    let clean = phone.replace(/\D/g, ''); // Remove tudo que nÃ£o Ã© dÃ­gito
     
-    // Remove código do país 55
+    // Remove cÃ³digo do paÃ­s 55
     if (clean.startsWith('55')) {
       clean = clean.substring(2);
     }
     
-    console.log('🧹 Limpeza de telefone:', phone, '→', clean);
+    
     return clean;
   }
 }
 
-// Inicializa a extensão quando o DOM estiver pronto
+// Inicializa a extensÃ£o quando o DOM estiver pronto
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     new WhatsAppSupportExtension();
