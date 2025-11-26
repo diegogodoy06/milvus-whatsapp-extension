@@ -357,19 +357,19 @@ body[data-theme="dark"],
   border-radius: 8px;
   border: none;
   cursor: pointer;
-  background: white;
-  color: #374151;
+  background: var(--ti-bg-secondary);
+  color: var(--ti-text-primary);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: 600;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--ti-border-color);
   letter-spacing: 0.2px;
 }
 
 .ti-btn-small:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
+  background: var(--ti-hover-bg);
+  border-color: var(--ti-border-color);
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 4px var(--ti-shadow);
 }
 
 .ti-btn-view {
@@ -690,6 +690,17 @@ body[data-theme="dark"] .ti-message-action-btn:hover {
   font-size: 12px;
 }
 
+/* Modo escuro - Erro */
+body[data-theme="dark"] .ti-error {
+  background-color: rgba(153, 27, 27, 0.2);
+  border-color: #991b1b;
+  color: #fca5a5;
+}
+
+body[data-theme="dark"] .ti-error small {
+  color: #f87171;
+}
+
 .ti-hint {
   margin-top: 8px;
   font-size: 12px;
@@ -718,6 +729,10 @@ body[data-theme="dark"] .ti-message-action-btn:hover {
   background: linear-gradient(180deg, #00a884 0%, #00c896 100%);
   opacity: 0;
   transition: opacity 0.3s ease;
+}
+
+body[data-theme="dark"] .ti-ticket-card::before {
+  background: linear-gradient(180deg, #144D37 0%, #1a6144 100%);
 }
 
 .ti-ticket-card:hover {
@@ -884,10 +899,11 @@ body[data-theme="dark"] .ti-priority-urgent {
 
 /* Detalhes do chamado */
 .ti-ticket-details {
-  background-color: white;
+  background-color: var(--ti-bg-secondary);
   border-radius: 8px;
   padding: 16px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px var(--ti-shadow);
+  border: 1px solid var(--ti-border-color);
 }
 
 .ti-ticket-details.hidden {
@@ -900,13 +916,13 @@ body[data-theme="dark"] .ti-priority-urgent {
   gap: 12px;
   margin-bottom: 16px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #e9edef;
+  border-bottom: 1px solid var(--ti-border-color);
 }
 
 .ti-detail-header h3 {
   margin: 0;
   font-size: 18px;
-  color: #111b21;
+  color: var(--ti-text-primary);
 }
 
 .ti-detail-content {
@@ -924,36 +940,49 @@ body[data-theme="dark"] .ti-priority-urgent {
 .ti-detail-row label {
   font-size: 12px;
   font-weight: 600;
-  color: #667781;
+  color: var(--ti-text-secondary);
   text-transform: uppercase;
 }
 
 .ti-detail-row span,
 .ti-detail-row p {
   font-size: 14px;
-  color: #111b21;
+  color: var(--ti-text-primary);
   margin: 0;
   line-height: 1.5;
+}
+
+/* Garante que conteúdo HTML na descrição use cores do tema */
+.ti-detail-row p *,
+.ti-detail-row span * {
+  color: inherit !important;
+  background-color: transparent !important;
+}
+
+.ti-detail-row a {
+  color: var(--ti-accent) !important;
+  text-decoration: underline;
 }
 
 /* Comentários */
 .ti-comments {
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid #e9edef;
+  border-top: 1px solid var(--ti-border-color);
 }
 
 .ti-comments h4 {
   margin: 0 0 12px 0;
   font-size: 14px;
-  color: #111b21;
+  color: var(--ti-text-primary);
 }
 
 .ti-comment {
-  background-color: #f7f8fa;
+  background-color: var(--ti-bg-tertiary);
   padding: 12px;
   border-radius: 8px;
   margin-bottom: 8px;
+  border: 1px solid var(--ti-border-color);
 }
 
 .ti-comment-header {
@@ -964,24 +993,37 @@ body[data-theme="dark"] .ti-priority-urgent {
 }
 
 .ti-comment-header strong {
-  color: #111b21;
+  color: var(--ti-text-primary);
 }
 
 .ti-comment-header span {
-  color: #667781;
+  color: var(--ti-text-secondary);
 }
 
-.ti-comment p {
+.ti-comment p,
+.ti-comment div {
   margin: 0;
   font-size: 13px;
-  color: #111b21;
+  color: var(--ti-text-primary);
   line-height: 1.4;
+}
+
+/* Garante que todo conteúdo HTML dentro dos comentários use cores do tema */
+.ti-comment div *,
+.ti-comment p * {
+  color: inherit !important;
+  background-color: transparent !important;
+}
+
+.ti-comment a {
+  color: var(--ti-accent) !important;
+  text-decoration: underline;
 }
 
 .ti-no-comments {
   text-align: center;
   padding: 20px;
-  color: #667781;
+  color: var(--ti-text-secondary);
   font-size: 13px;
 }
 
@@ -989,23 +1031,25 @@ body[data-theme="dark"] .ti-priority-urgent {
 .ti-comment-form {
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid #e9edef;
+  border-top: 1px solid var(--ti-border-color);
 }
 
 .ti-comment-form textarea {
   width: 100%;
   padding: 8px;
-  border: 1px solid #d1d7db;
+  border: 1px solid var(--ti-border-color);
   border-radius: 6px;
   font-family: inherit;
   font-size: 13px;
   resize: vertical;
   margin-bottom: 8px;
+  background-color: var(--ti-bg-secondary);
+  color: var(--ti-text-primary);
 }
 
 .ti-comment-form textarea:focus {
   outline: none;
-  border-color: #00a884;
+  border-color: var(--ti-accent);
 }
 
 .ti-comment-form textarea.ti-ai-filled {
@@ -1054,16 +1098,16 @@ body[data-theme="dark"] .ti-btn-gemini:hover {
 
 /* Formulário */
 .ti-form {
-  background-color: white;
+  background-color: var(--ti-bg-secondary);
   border-radius: 8px;
   padding: 16px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px var(--ti-shadow);
 }
 
 .ti-form h3 {
   margin: 0 0 16px 0;
   font-size: 18px;
-  color: #111b21;
+  color: var(--ti-text-primary);
 }
 
 .ti-form-group {
@@ -1075,7 +1119,7 @@ body[data-theme="dark"] .ti-btn-gemini:hover {
   margin-bottom: 6px;
   font-size: 13px;
   font-weight: 500;
-  color: #54656f;
+  color: var(--ti-text-secondary);
 }
 
 .ti-form-group input,
@@ -1083,18 +1127,25 @@ body[data-theme="dark"] .ti-btn-gemini:hover {
 .ti-form-group select {
   width: 100%;
   padding: 10px;
-  border: 1px solid #d1d7db;
+  border: 1px solid var(--ti-border-color);
   border-radius: 6px;
   font-family: inherit;
   font-size: 14px;
   box-sizing: border-box;
+  background-color: var(--ti-bg-secondary);
+  color: var(--ti-text-primary);
 }
 
 .ti-form-group input:focus,
 .ti-form-group textarea:focus,
 .ti-form-group select:focus {
   outline: none;
-  border-color: #00a884;
+  border-color: var(--ti-accent);
+}
+
+.ti-form-group input::placeholder,
+.ti-form-group textarea::placeholder {
+  color: var(--ti-text-tertiary);
 }
 
 .ti-form-actions {
@@ -1139,6 +1190,17 @@ body[data-theme="dark"] .ti-btn-gemini:hover {
 
 .ti-toolbar-button .ti-btn-icon:active {
   transform: scale(0.95) !important;
+}
+
+/* Toolbar button modo escuro */
+body[data-theme="dark"] .ti-toolbar-button .ti-btn-icon {
+  background: linear-gradient(135deg, #144D37 0%, #1a6144 100%) !important;
+  box-shadow: 0 4px 12px rgba(20, 77, 55, 0.5) !important;
+}
+
+body[data-theme="dark"] .ti-toolbar-button .ti-btn-icon:hover {
+  background: linear-gradient(135deg, #1a6144 0%, #22805a 100%) !important;
+  box-shadow: 0 6px 20px rgba(20, 77, 55, 0.6) !important;
 }
 
 /* Toast de Notificação - Design Premium */
@@ -1208,6 +1270,15 @@ body[data-theme="dark"] .ti-btn-gemini:hover {
 
 .ti-panel-content::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.3);
+}
+
+/* Scrollbar modo escuro */
+body[data-theme="dark"] .ti-panel-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+body[data-theme="dark"] .ti-panel-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* Botão Flutuante - Toggle do Painel */
