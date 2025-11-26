@@ -1255,15 +1255,28 @@ body:not(.ti-panel-hidden) .ti-floating-toggle {
   right: 424px;
 }
 
-/* Responsividade */
+/* Responsividade e ajuste de layout do WhatsApp */
 @media (max-width: 1200px) {
   .ti-support-panel {
     width: 400px;
   }
-  
-  body:not(.ti-panel-hidden) #app {
-    margin-right: 400px !important;
-  }
+}
+
+/* Garante que o WhatsApp não seja sobreposto pelo painel */
+body:not(.ti-panel-hidden) #app {
+  width: calc(100% - 400px) !important;
+  max-width: calc(100vw - 400px) !important;
+  transition: width 0.3s ease, max-width 0.3s ease !important;
+}
+
+body:not(.ti-panel-hidden) #app > div,
+body:not(.ti-panel-hidden) #app > div > div {
+  max-width: 100% !important;
+}
+
+body.ti-panel-hidden #app {
+  width: 100% !important;
+  max-width: 100vw !important;
 }
 
 @media (max-width: 900px) {

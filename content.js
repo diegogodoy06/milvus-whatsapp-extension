@@ -296,13 +296,72 @@ class WhatsAppSupportExtension {
     style.id = 'ti-layout-adjustments';
     style.textContent = `
       /* Força o WhatsApp a deixar espaço para o painel fixo */
-      #app {
-        margin-right: 360px !important;
+      /* Aplica em múltiplos elementos para garantir compatibilidade */
+      body:not(.ti-panel-hidden) #app,
+      body:not(.ti-panel-hidden) #app > div,
+      body:not(.ti-panel-hidden) #app > div > div,
+      body:not(.ti-panel-hidden) [data-testid="chat-list"],
+      body:not(.ti-panel-hidden) #main,
+      body:not(.ti-panel-hidden) [role="main"] {
+        max-width: calc(100vw - 400px) !important;
+        transition: max-width 0.3s ease !important;
       }
       
-      /* Quando o painel está escondido, remove a margem */
-      body.ti-panel-hidden #app {
-        margin-right: 0 !important;
+      /* Garante que o container principal respeite o espaço */
+      body:not(.ti-panel-hidden) #app {
+        width: calc(100% - 400px) !important;
+        transition: width 0.3s ease !important;
+      }
+      
+      /* Quando o painel está escondido, remove as restrições */
+      body.ti-panel-hidden #app,
+      body.ti-panel-hidden #app > div,
+      body.ti-panel-hidden #app > div > div,
+      body.ti-panel-hidden [data-testid="chat-list"],
+      body.ti-panel-hidden #main,
+      body.ti-panel-hidden [role="main"] {
+        max-width: 100vw !important;
+        width: 100% !important;
+      }
+      
+      /* Evita que elementos flutuantes do WhatsApp fiquem sobre o painel */
+      body:not(.ti-panel-hidden) [data-testid="menu"],
+      body:not(.ti-panel-hidden) [data-testid="popup"] {
+        right: auto !important;
+      }
+      
+      /* Esconde o painel quando o visualizador de mídia está aberto */
+      /* O visualizador de mídia deve ter z-index maior e ocupar tela cheia */
+      body:has([data-testid="media-viewer"]) .ti-support-panel,
+      body:has([data-testid="image-preview"]) .ti-support-panel,
+      body:has([data-testid="media-viewer-modal"]) .ti-support-panel,
+      body:has([data-testid="lightbox"]) .ti-support-panel,
+      body:has([data-testid="image-viewer"]) .ti-support-panel,
+      body:has([role="dialog"][aria-modal="true"]) .ti-support-panel,
+      body:has(.overlay) .ti-support-panel,
+      body:has(div[tabindex="-1"] > div > img[draggable="false"]) .ti-support-panel {
+        display: none !important;
+      }
+      
+      /* Também esconde o botão flutuante quando visualizador está aberto */
+      body:has([data-testid="media-viewer"]) .ti-floating-toggle,
+      body:has([data-testid="image-preview"]) .ti-floating-toggle,
+      body:has([data-testid="media-viewer-modal"]) .ti-floating-toggle,
+      body:has([data-testid="lightbox"]) .ti-floating-toggle,
+      body:has([data-testid="image-viewer"]) .ti-floating-toggle,
+      body:has([role="dialog"][aria-modal="true"]) .ti-floating-toggle,
+      body:has(.overlay) .ti-floating-toggle,
+      body:has(div[tabindex="-1"] > div > img[draggable="false"]) .ti-floating-toggle {
+        display: none !important;
+      }
+      
+      /* Restaura o layout do WhatsApp quando visualizador está aberto */
+      body:has([data-testid="media-viewer"]) #app,
+      body:has([data-testid="image-preview"]) #app,
+      body:has([data-testid="media-viewer-modal"]) #app,
+      body:has([role="dialog"][aria-modal="true"]) #app {
+        width: 100% !important;
+        max-width: 100vw !important;
       }
     `;
     document.head.appendChild(style);
@@ -1212,21 +1271,16 @@ Comentário original: """${sanitizedComment}"""`;
 
     this.panelVisible = show !== null ? show : !this.panelVisible;
     
-    // Elemento principal do WhatsApp
-    const whatsappMain = document.querySelector('#main') || 
-                        document.querySelector('[role="main"]') ||
-                        document.querySelector('#app > div > div');
-    
     if (this.panelVisible) {
       console.log('📂 Abrindo painel...');
       
       panel.classList.remove('hidden');
+      document.body.classList.remove('ti-panel-hidden');
       
-      // Ajusta largura do WhatsApp para dar espaço ao painel
-      if (whatsappMain) {
-        whatsappMain.style.marginRight = '400px';
-        whatsappMain.style.transition = 'margin-right 0.3s ease';
-      }
+      // Força recalculo do layout após pequeno delay
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 50);
       
       // Limpa APENAS os tickets (mantém contato e telefone)
       console.log('🧹 Limpando cache de tickets (mantendo informações do contato)...');
@@ -1263,15 +1317,16 @@ Comentário original: """${sanitizedComment}"""`;
       console.log('📁 Fechando painel...');
       
       panel.classList.add('hidden');
+      document.body.classList.add('ti-panel-hidden');
       
-      // Restaura largura do WhatsApp
-      if (whatsappMain) {
-        whatsappMain.style.marginRight = '0';
-      }
+      // Força recalculo do layout
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 50);
       
       // Garante que o botão permanece visível
       setTimeout(() => {
-        console.log('� Verificando botão após fechar painel...');
+        console.log('🔘 Verificando botão após fechar painel...');
         this.ensureToolbarButton();
       }, 150);
     }
@@ -2142,9 +2197,6 @@ Comentário original: """${sanitizedComment}"""`;
 
   const ticketCode = (await response.text()).trim();
   this.showMessage(`Chamado #${ticketCode} criado com sucesso!`, 'success');
-
-  const subjectForMessage = (assunto ?? '').toString().trim();
-  await this.notifyContactTicketCreated(ticketCode, subjectForMessage);
 
   await this.loadTickets();
     } catch (error) {
