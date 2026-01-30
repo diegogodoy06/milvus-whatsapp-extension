@@ -1097,6 +1097,8 @@ Use um tom profissional e claro em português.`;
     const responseParts = data?.candidates?.[0]?.content?.parts || [];
     const combinedText = responseParts.map(part => part.text).filter(Boolean).join('\n').trim();
 
+    console.log('Gemini raw response:', combinedText);
+
     if (!combinedText) {
       return {
         title: '',
@@ -1108,11 +1110,20 @@ Use um tom profissional e claro em português.`;
       };
     }
 
-    const cleaned = combinedText
-      .replace(/^```json/i, '')
-      .replace(/^```/i, '')
-      .replace(/```$/i, '')
+    // Limpa marcadores de código markdown
+    let cleaned = combinedText
+      .replace(/^```json\s*/i, '')
+      .replace(/^```\s*/i, '')
+      .replace(/\s*```$/i, '')
       .trim();
+
+    // Tenta extrair JSON do texto (pode vir com texto antes/depois)
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      cleaned = jsonMatch[0];
+    }
+
+    console.log('Gemini response (cleaned):', cleaned);
 
     try {
       const parsed = JSON.parse(cleaned);
