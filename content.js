@@ -999,7 +999,7 @@ class WhatsAppSupportExtension {
 
   async generateTicketSuggestion(messageText, imageData = null) {
     const sanitizedMessage = messageText ? messageText.trim().slice(0, 4000) : '';
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
 
     // Lista de categorias disponíveis para o Gemini escolher
     const categoriesText = Object.keys(MILVUS_CATEGORIES).join('\n- ');
@@ -1159,7 +1159,7 @@ Use um tom profissional e claro em português.`;
 
   async generateCommentRefinement(originalComment, context = {}) {
     const sanitizedComment = originalComment.trim().slice(0, 4000);
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
 
     const ticketInfo = context.ticketId ? `#${context.ticketId}` : 'desconhecido';
     const contactInfo = context.contactName ? context.contactName : (context.contactPhone || 'Contato não identificado');
