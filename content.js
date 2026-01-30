@@ -1,70 +1,70 @@
-﻿// Content Script - Injetado no WhatsApp Web
+// Content Script - Injetado no WhatsApp Web
 
 
-// ConfiguraÃ§Ã£o da API Milvus (pode ser alterada via popup)
+// Configuração da API Milvus (pode ser alterada via popup)
 let API_BASE_URL = 'https://apiintegracao.milvus.com.br/api'; // URL da API Milvus
-let API_TOKEN = ''; // Token de autenticaÃ§Ã£o
+let API_TOKEN = ''; // Token de autenticação
 let GEMINI_API_KEY = '';
 
-// Mapeamento de Categorias do Milvus (Categoria PrimÃ¡ria | Categoria SecundÃ¡ria : ID)
+// Mapeamento de Categorias do Milvus (Categoria Primária | Categoria Secundária : ID)
 const MILVUS_CATEGORIES = {
   'Acessos': '157982',
-  'Acessos | LiberaÃ§Ã£o PortÃµes Estoque': '631701',
-  'Acessos | RecuperaÃ§Ã£o de senha': '631422',
-  'Acessos | LiberaÃ§Ã£o de Sites / Firewall': '631421',
-  'Acessos | LiberaÃ§Ã£o de acesso Outros': '631419',
-  'Acessos | LiberaÃ§Ã£o de acesso Alarme': '631417',
-  'Acessos | RemoÃ§Ã£o de Acessos': '563653',
-  'Acessos | LiberaÃ§Ã£o de funÃ§Ãµes ERP': '563543',
-  'Acessos | LiberaÃ§Ã£o de acesso Pastas (NAS)': '562350',
-  'Acessos | Novo colaborador / Cadastro de funcionÃ¡rio': '562349',
+  'Acessos | Liberação Portões Estoque': '631701',
+  'Acessos | Recuperação de senha': '631422',
+  'Acessos | Liberação de Sites / Firewall': '631421',
+  'Acessos | Liberação de acesso Outros': '631419',
+  'Acessos | Liberação de acesso Alarme': '631417',
+  'Acessos | Remoção de Acessos': '563653',
+  'Acessos | Liberação de funções ERP': '563543',
+  'Acessos | Liberação de acesso Pastas (NAS)': '562350',
+  'Acessos | Novo colaborador / Cadastro de funcionário': '562349',
   'Backup': '157479',
-  'Backup | ExecuÃ§Ã£o': '631424',
-  'Backup | Restore ExecuÃ§Ã£o': '561052',
+  'Backup | Execução': '631424',
+  'Backup | Restore Execução': '561052',
   'Backup | Corrompido': '559948',
-  'Backup | NÃ£o rodou': '559947',
+  'Backup | Não rodou': '559947',
   'Gerencial': '157749',
-  'Gerencial | PrestaÃ§Ã£o de contas': '631425',
-  'Gerencial | RelatÃ³rios gerenciais / SaÃ­da': '561068',
+  'Gerencial | Prestação de contas': '631425',
+  'Gerencial | Relatórios gerenciais / Saída': '561068',
   'Gerencial | Procedimento Operacional': '561063',
-  'Gerencial | Torno CNC / Prorrogar expiraÃ§Ã£o mensal': '561061',
+  'Gerencial | Torno CNC / Prorrogar expiração mensal': '561061',
   'Hardware': '157480',
-  'Hardware | Outros tipos de aprovaÃ§Ãµes': '631595',
-  'Hardware | ConfiguraÃ§Ã£o inicial': '631426',
-  'Hardware | MudanÃ§a fÃ­sica': '621634',
+  'Hardware | Outros tipos de aprovações': '631595',
+  'Hardware | Configuração inicial': '631426',
+  'Hardware | Mudança física': '621634',
   'Hardware | Passagem de cabos': '580941',
-  'Hardware | Computador NÃ£o liga': '561075',
+  'Hardware | Computador Não liga': '561075',
   'Hardware | Mouse / Teclado / Monitor / Outros': '561074',
   'Hardware | Limpeza': '559950',
-  'Hardware | Troca de peÃ§a': '559949',
+  'Hardware | Troca de peça': '559949',
   'Impressoras': '159289',
-  'Impressoras | Outros Problemas de impressÃ£o': '631427',
+  'Impressoras | Outros Problemas de impressão': '631427',
   'Impressoras | Suprimentos / Troca de Tonner': '567350',
-  'Impressoras | ManutenÃ§Ã£o': '567349',
-  'Impressoras | InstalaÃ§Ã£o': '567348',
+  'Impressoras | Manutenção': '567349',
+  'Impressoras | Instalação': '567348',
   'Servidor': '157482',
   'Servidor | Servidor NAS': '561090',
   'Servidor | Servidor Windows': '561086',
-  'Servidor | Outros servidores / VirtualizaÃ§Ã£o': '559955',
+  'Servidor | Outros servidores / Virtualização': '559955',
   'Software': '157481',
-  'Software | InstalaÃ§Ã£o / ConfiguraÃ§Ã£o / RemoÃ§Ã£o': '631443',
-  'Software | FormataÃ§Ã£o': '563670',
+  'Software | Instalação / Configuração / Remoção': '631443',
+  'Software | Formatação': '563670',
   'Software | SolidWorks': '561114',
   'Software | Adobe / Corel': '561111',
   'Software | Sistema Operacional Problemas': '561107',
-  'Software | Contratar software / licenÃ§a': '561103',
-  'Software | ERP Ajuste / ParametrizaÃ§Ã£o': '559953',
+  'Software | Contratar software / licença': '561103',
+  'Software | ERP Ajuste / Parametrização': '559953',
   'Software | ERP Erro no sistema': '559951',
   'Telefonia': '157751',
-  'Telefonia | RelatÃ³rios': '633559',
+  'Telefonia | Relatórios': '633559',
   'Telefonia | Problema com Aparelho': '631428',
   'Telefonia | Ramal Problema': '561126',
   'Telefonia | Ramal Configurar / Instalar': '561125',
-  'Telefonia | Problema linha mÃ³vel / chip': '561123',
-  'Telefonia | Contratar Ramal / Linha / Linha MÃ³vel': '561122'
+  'Telefonia | Problema linha móvel / chip': '561123',
+  'Telefonia | Contratar Ramal / Linha / Linha Móvel': '561122'
 };
 
-// Carrega configuraÃ§Ãµes salvas
+// Carrega configurações salvas
 chrome.storage.sync.get(['apiBaseUrl', 'apiToken', 'geminiApiKey'], (result) => {
   if (result.apiBaseUrl) {
     API_BASE_URL = result.apiBaseUrl;
@@ -90,7 +90,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
   }
 });
 
-// Classe principal da extensÃ£o
+// Classe principal da extensão
 class WhatsAppSupportExtension {
   constructor() {
     this.currentContact = null;
@@ -156,7 +156,7 @@ class WhatsAppSupportExtension {
   }
 
   detectAndApplyTheme() {
-    // Detecta se o WhatsApp estÃ¡ em modo escuro
+    // Detecta se o WhatsApp está em modo escuro
     const isDark = document.body.classList.contains('dark') ||
                    document.documentElement.getAttribute('data-theme') === 'dark' ||
                    document.documentElement.getAttribute('data-color-scheme') === 'dark' ||
@@ -170,7 +170,7 @@ class WhatsAppSupportExtension {
       
     }
     
-    // Observer para detectar mudanÃ§as de tema
+    // Observer para detectar mudanças de tema
     const themeObserver = new MutationObserver(() => {
       this.detectAndApplyTheme();
     });
@@ -193,7 +193,7 @@ class WhatsAppSupportExtension {
     const checkInterval = setInterval(() => {
       attempts++;
       
-      // Verifica se o WhatsApp estÃ¡ carregado (qualquer elemento principal)
+      // Verifica se o WhatsApp está carregado (qualquer elemento principal)
       const appElement = document.querySelector('#app');
       const hasLoaded = appElement && appElement.querySelector('[data-testid], [role]');
       
@@ -207,12 +207,12 @@ class WhatsAppSupportExtension {
           this.togglePanel(true);
         }, 500);
         
-        // Configura observers para detectar mudanÃ§as de contato
+        // Configura observers para detectar mudanças de contato
         this.setupObservers();
         
       } else if (attempts > 60) {
         clearInterval(checkInterval);
-        console.error('âŒ Timeout: WhatsApp nÃ£o carregou apÃ³s 60 tentativas');
+        console.error('� Timeout: WhatsApp não carregou após 60 tentativas');
       } else if (attempts % 10 === 0) {
         
       }
@@ -275,19 +275,19 @@ class WhatsAppSupportExtension {
         </div>
 
         <div id="ti-ticket-details" class="ti-ticket-details hidden">
-          <!-- Detalhes do chamado serÃ£o inseridos aqui -->
+          <!-- Detalhes do chamado serão inseridos aqui -->
         </div>
       </div>
     `;
 
-    // Injeta direto no BODY para garantir que sempre apareÃ§a
+    // Injeta direto no BODY para garantir que sempre apareça
     
     document.body.appendChild(panel);
     
     // Inicializa com painel oculto
     document.body.classList.add('ti-panel-hidden');
     
-    // Cria botÃ£o flutuante para abrir/fechar o painel
+    // Cria botão flutuante para abrir/fechar o painel
     this.createFloatingButton();
     
     this.setupEventListeners();
@@ -321,8 +321,8 @@ class WhatsAppSupportExtension {
     const style = document.createElement('style');
     style.id = 'ti-layout-adjustments';
     style.textContent = `
-      /* ForÃ§a o WhatsApp a deixar espaÃ§o para o painel fixo */
-      /* Aplica em mÃºltiplos elementos para garantir compatibilidade */
+      /* Força o WhatsApp a deixar espaço para o painel fixo */
+      /* Aplica em múltiplos elementos para garantir compatibilidade */
       body:not(.ti-panel-hidden) #app,
       body:not(.ti-panel-hidden) #app > div,
       body:not(.ti-panel-hidden) #app > div > div,
@@ -333,13 +333,13 @@ class WhatsAppSupportExtension {
         transition: max-width 0.3s ease !important;
       }
       
-      /* Garante que o container principal respeite o espaÃ§o */
+      /* Garante que o container principal respeite o espaço */
       body:not(.ti-panel-hidden) #app {
         width: calc(100% - 400px) !important;
         transition: width 0.3s ease !important;
       }
       
-      /* Quando o painel estÃ¡ escondido, remove as restriÃ§Ãµes */
+      /* Quando o painel está escondido, remove as restrições */
       body.ti-panel-hidden #app,
       body.ti-panel-hidden #app > div,
       body.ti-panel-hidden #app > div > div,
@@ -356,8 +356,8 @@ class WhatsAppSupportExtension {
         right: auto !important;
       }
       
-      /* Esconde o painel quando o visualizador de mÃ­dia estÃ¡ aberto */
-      /* O visualizador de mÃ­dia deve ter z-index maior e ocupar tela cheia */
+      /* Esconde o painel quando o visualizador de mídia está aberto */
+      /* O visualizador de mídia deve ter z-index maior e ocupar tela cheia */
       body:has([data-testid="media-viewer"]) .ti-support-panel,
       body:has([data-testid="image-preview"]) .ti-support-panel,
       body:has([data-testid="media-viewer-modal"]) .ti-support-panel,
@@ -369,7 +369,7 @@ class WhatsAppSupportExtension {
         display: none !important;
       }
       
-      /* TambÃ©m esconde o botÃ£o flutuante quando visualizador estÃ¡ aberto */
+      /* Também esconde o botão flutuante quando visualizador está aberto */
       body:has([data-testid="media-viewer"]) .ti-floating-toggle,
       body:has([data-testid="image-preview"]) .ti-floating-toggle,
       body:has([data-testid="media-viewer-modal"]) .ti-floating-toggle,
@@ -381,7 +381,7 @@ class WhatsAppSupportExtension {
         display: none !important;
       }
       
-      /* Restaura o layout do WhatsApp quando visualizador estÃ¡ aberto */
+      /* Restaura o layout do WhatsApp quando visualizador está aberto */
       body:has([data-testid="media-viewer"]) #app,
       body:has([data-testid="image-preview"]) #app,
       body:has([data-testid="media-viewer-modal"]) #app,
@@ -394,17 +394,17 @@ class WhatsAppSupportExtension {
   }
 
   setupEventListeners() {
-    // BotÃ£o de fechar painel
+    // Botão de fechar painel
     document.getElementById('ti-close-panel')?.addEventListener('click', () => {
       this.togglePanel(false);
     });
 
-    // BotÃ£o de novo chamado
+    // Botão de novo chamado
     document.getElementById('ti-new-ticket')?.addEventListener('click', () => {
       this.showNewTicketForm();
     });
 
-    // BotÃ£o de atualizar
+    // Botão de atualizar
     document.getElementById('ti-refresh-tickets')?.addEventListener('click', () => {
       this.loadTickets();
     });
@@ -417,7 +417,7 @@ class WhatsAppSupportExtension {
 
   observeHeader(header) {
     if (!header) {
-      console.warn('âš ï¸ observeHeader chamado sem header vÃ¡lido');
+      console.warn('⚠� observeHeader chamado sem header válido');
       return;
     }
 
@@ -438,7 +438,7 @@ class WhatsAppSupportExtension {
 
     this.headerObserver.observe(header, { 
       childList: true, 
-      subtree: false // Reduz chamadas desnecessÃ¡rias
+      subtree: false // Reduz chamadas desnecessárias
     });
     
   }
@@ -446,14 +446,14 @@ class WhatsAppSupportExtension {
   setupObservers() {
     
     
-    // Observer na URL para detectar mudanÃ§as de conversa
+    // Observer na URL para detectar mudanças de conversa
     let lastUrl = window.location.href;
     const urlObserver = new MutationObserver(() => {
       const currentUrl = window.location.href;
       if (currentUrl !== lastUrl) {
         
         lastUrl = currentUrl;
-        this.scheduleContactDetection(900, 'mudanÃ§a de URL');
+        this.scheduleContactDetection(900, 'mudança de URL');
       }
     });
     
@@ -464,8 +464,8 @@ class WhatsAppSupportExtension {
     
     
     
-    // DetecÃ§Ã£o inicial imediata
-    this.scheduleContactDetection(1000, 'detecÃ§Ã£o inicial');
+    // Detecção inicial imediata
+    this.scheduleContactDetection(1000, 'detecção inicial');
     
     // Tenta configurar observer no header se existir
     const header = this.getChatHeader();
@@ -473,7 +473,7 @@ class WhatsAppSupportExtension {
       this.observeHeader(header);
     }
     
-    // Observer no main element para detectar quando um header Ã© criado
+    // Observer no main element para detectar quando um header é criado
     const mainElement = document.querySelector('[role="main"]') || document.querySelector('#main');
     if (mainElement && !this.mainObserver) {
       let mainDebounceTimer = null;
@@ -496,7 +496,7 @@ class WhatsAppSupportExtension {
       
     }
 
-    // Observer na lista de chats para capturar seleÃ§Ã£o de novos contatos
+    // Observer na lista de chats para capturar seleção de novos contatos
     const chatList = document.querySelector('[data-testid="chat-list"]') ||
                      document.querySelector('[role="grid"]');
 
@@ -524,7 +524,7 @@ class WhatsAppSupportExtension {
       
     }
 
-    // Configura aÃ§Ãµes nas mensagens (botÃ£o de chamado)
+    // Configura ações nas mensagens (botão de chamado)
     
     setTimeout(() => this.setupMessageActions(), 1500);
   }
@@ -535,7 +535,7 @@ class WhatsAppSupportExtension {
       this.messageObserver = null;
     }
 
-    // Tenta mÃºltiplos seletores para Ã¡rea de mensagens
+    // Tenta múltiplos seletores para área de mensagens
     const messagesArea = document.querySelector('#main') ||
                          document.querySelector('[role="main"]') ||
                          document.querySelector('[data-testid="conversation-panel-messages"]') ||
@@ -551,13 +551,13 @@ class WhatsAppSupportExtension {
     
 
     const attachButtons = () => {
-      // Tenta seletores mais genÃ©ricos para mensagens
+      // Tenta seletores mais genéricos para mensagens
       let messageNodes = [];
       
       // Busca por divs com classes que contenham 'message'
       const allDivs = messagesArea.querySelectorAll('div[class*="message"]');
       allDivs.forEach(div => {
-        // Verifica se Ã© uma mensagem real (tem texto ou mÃ­dia)
+        // Verifica se é uma mensagem real (tem texto ou mídia)
         const hasText = div.querySelector('span[dir="ltr"], span[dir="rtl"], span[dir="auto"]');
         const hasMedia = div.querySelector('img, video, audio');
         
@@ -643,7 +643,7 @@ class WhatsAppSupportExtension {
       if (targetMessage) {
         this.handleMessageTicket(targetMessage);
       } else {
-        this.showMessage('NÃ£o foi possÃ­vel identificar a mensagem selecionada.', 'error');
+        this.showMessage('Não foi possível identificar a mensagem selecionada.', 'error');
       }
 
       setTimeout(() => {
@@ -682,12 +682,12 @@ class WhatsAppSupportExtension {
     // Tenta detectar imediatamente
     detectMenuClick();
 
-    // Cria botÃ£o customizado simples que sempre aparece
+    // Cria botão customizado simples que sempre aparece
     const ticketBtn = document.createElement('button');
     ticketBtn.type = 'button';
     ticketBtn.className = 'ti-simple-ticket-btn';
     ticketBtn.title = 'Criar chamado de suporte';
-    ticketBtn.innerHTML = 'ðŸŽ«';
+    ticketBtn.innerHTML = '🎫';
 
     ticketBtn.addEventListener('click', (event) => {
       event.stopPropagation();
@@ -696,7 +696,7 @@ class WhatsAppSupportExtension {
       this.handleMessageTicket(messageElement);
     });
 
-    // Adiciona o botÃ£o diretamente no container da mensagem
+    // Adiciona o botão diretamente no container da mensagem
     messageElement.style.position = 'relative';
     messageElement.appendChild(ticketBtn);
 
@@ -709,7 +709,7 @@ class WhatsAppSupportExtension {
   }
 
   injectTicketButtonInMessageActions(messageElement) {
-    // FunÃ§Ã£o removida - usando abordagem mais simples acima
+    // Função removida - usando abordagem mais simples acima
   }
 
   extractMessageTextFromBubble(messageElement) {
@@ -820,7 +820,7 @@ class WhatsAppSupportExtension {
      }
 
      const prePlain = messageElement.getAttribute?.('data-pre-plain-text') || '';
-     if (prePlain.includes('VocÃª:')) {
+     if (prePlain.includes('Você:')) {
        return 'out';
      }
      if (prePlain.length) {
@@ -940,12 +940,12 @@ class WhatsAppSupportExtension {
     const imageData = this.extractImageFromMessage(messageElement);
 
     if (!messageText && !imageData) {
-      this.showMessage('NÃ£o foi possÃ­vel capturar conteÃºdo da mensagem selecionada.', 'error');
+      this.showMessage('Não foi possível capturar conteúdo da mensagem selecionada.', 'error');
       return;
     }
 
     if (!GEMINI_API_KEY) {
-      this.showMessage('Configure a chave da Gemini API nas configuraÃ§Ãµes da extensÃ£o.', 'error');
+      this.showMessage('Configure a chave da Gemini API nas configurações da extensão.', 'error');
       return;
     }
 
@@ -956,9 +956,9 @@ class WhatsAppSupportExtension {
       }
 
       if (imageData) {
-        this.showMessage('ï¿½ï¸ Analisando imagem com Gemini...', 'info');
+        this.showMessage('�� Analisando imagem com Gemini...', 'info');
       } else {
-        this.showMessage('ï¿½ðŸ’¡ Gerando sugestÃ£o de chamado com Gemini...', 'info');
+        this.showMessage('�💡 Gerando sugestão de chamado com Gemini...', 'info');
       }
 
       const suggestion = await this.generateTicketSuggestion(messageText, imageData);
@@ -966,7 +966,7 @@ class WhatsAppSupportExtension {
       if (suggestion.notice) {
         this.showMessage(suggestion.notice, 'info');
       } else {
-        this.showMessage('âœ… SugestÃ£o criada! Revise os campos antes de enviar.', 'success');
+        this.showMessage('✅ Sugestão criada! Revise os campos antes de enviar.', 'success');
       }
 
       this.showNewTicketForm({
@@ -982,12 +982,12 @@ class WhatsAppSupportExtension {
         hasImage: !!imageData
       });
     } catch (error) {
-      console.error('Erro ao gerar sugestÃ£o com Gemini:', error);
-      this.showMessage(`Falha ao gerar sugestÃ£o: ${error.message}`, 'error');
+      console.error('Erro ao gerar sugestão com Gemini:', error);
+      this.showMessage(`Falha ao gerar sugestão: ${error.message}`, 'error');
 
       this.showNewTicketForm({
         title: '',
-        description: messageText || '[Imagem anexada - anÃ¡lise nÃ£o disponÃ­vel]',
+        description: messageText || '[Imagem anexada - análise não disponível]',
         contactName: this.currentContact,
         contactPhone: this.currentPhone,
         originalMessage: messageText,
@@ -999,31 +999,31 @@ class WhatsAppSupportExtension {
 
   async generateTicketSuggestion(messageText, imageData = null) {
     const sanitizedMessage = messageText ? messageText.trim().slice(0, 4000) : '';
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
 
-    // Lista de categorias disponÃ­veis para o Gemini escolher
+    // Lista de categorias disponíveis para o Gemini escolher
     const categoriesText = Object.keys(MILVUS_CATEGORIES).join('\n- ');
 
-    let prompt = `VocÃª Ã© um analista de suporte tÃ©cnico. `;
+    let prompt = `Você é um analista de suporte técnico. `;
     
     if (imageData) {
       prompt += `Analise a imagem fornecida e o texto (se houver) para:
-1. Descrever o que vocÃª vÃª na imagem (telas, erros, equipamentos, problemas visÃ­veis)
-2. Gerar um tÃ­tulo curto (atÃ© 80 caracteres) baseado no problema identificado
-3. Criar uma descriÃ§Ã£o detalhada incluindo o que foi observado na imagem
-4. ESCOLHER a categoria mais adequada desta lista (use EXATAMENTE como estÃ¡ escrito):
+1. Descrever o que você vê na imagem (telas, erros, equipamentos, problemas visíveis)
+2. Gerar um título curto (até 80 caracteres) baseado no problema identificado
+3. Criar uma descrição detalhada incluindo o que foi observado na imagem
+4. ESCOLHER a categoria mais adequada desta lista (use EXATAMENTE como está escrito):
 
-CATEGORIAS DISPONÃVEIS:
+CATEGORIAS DISPON�VEIS:
 - ${categoriesText}
 
-Considere a imagem como evidÃªncia principal do problema relatado.`;
+Considere a imagem como evidência principal do problema relatado.`;
     } else {
       prompt += `Analise a mensagem e:
-1. Gere um tÃ­tulo curto (atÃ© 80 caracteres)
-2. Crie uma descriÃ§Ã£o detalhada
-3. ESCOLHA a categoria mais adequada desta lista (use EXATAMENTE como estÃ¡ escrito):
+1. Gere um título curto (até 80 caracteres)
+2. Crie uma descrição detalhada
+3. ESCOLHA a categoria mais adequada desta lista (use EXATAMENTE como está escrito):
 
-CATEGORIAS DISPONÃVEIS:
+CATEGORIAS DISPON�VEIS:
 - ${categoriesText}`;
     }
 
@@ -1036,7 +1036,7 @@ Responda APENAS em JSON com o formato:
   "category": "categoria exata da lista"
 }
 
-Use um tom profissional e claro em portuguÃªs.`;
+Use um tom profissional e claro em português.`;
 
     if (messageText) {
       prompt += `\n\nTexto da mensagem: """${sanitizedMessage}"""`;
@@ -1047,7 +1047,7 @@ Use um tom profissional e claro em portuguÃªs.`;
     // Adiciona o prompt de texto
     parts.push({ text: prompt });
 
-    // Adiciona imagem se disponÃ­vel
+    // Adiciona imagem se disponível
     if (imageData) {
       try {
         const base64Image = await this.convertImageToBase64(imageData.element);
@@ -1058,9 +1058,9 @@ Use um tom profissional e claro em portuguÃªs.`;
           }
         });
       } catch (error) {
-        console.warn('Falha ao processar imagem, continuando sÃ³ com texto:', error);
+        console.warn('Falha ao processar imagem, continuando só com texto:', error);
         if (!messageText) {
-          throw new Error('NÃ£o foi possÃ­vel processar a imagem e nÃ£o hÃ¡ texto disponÃ­vel');
+          throw new Error('Não foi possível processar a imagem e não há texto disponível');
         }
       }
     }
@@ -1100,10 +1100,10 @@ Use um tom profissional e claro em portuguÃªs.`;
     if (!combinedText) {
       return {
         title: '',
-        description: sanitizedMessage || '[Imagem anexada - descriÃ§Ã£o nÃ£o gerada]',
+        description: sanitizedMessage || '[Imagem anexada - descrição não gerada]',
         category: null,
         categoryId: null,
-        notice: 'NÃ£o foi possÃ­vel gerar sugestÃ£o automÃ¡tica. ConteÃºdo original carregado.',
+        notice: 'Não foi possível gerar sugestão automática. Conteúdo original carregado.',
         source: 'gemini'
       };
     }
@@ -1117,7 +1117,7 @@ Use um tom profissional e claro em portuguÃªs.`;
     try {
       const parsed = JSON.parse(cleaned);
       
-      // Extrai categoria primÃ¡ria e secundÃ¡ria
+      // Extrai categoria primária e secundária
       let categoryId = null;
       let primaryCategory = null;
       let secondaryCategory = null;
@@ -1125,7 +1125,7 @@ Use um tom profissional e claro em portuguÃªs.`;
       if (parsed.category && MILVUS_CATEGORIES[parsed.category]) {
         categoryId = MILVUS_CATEGORIES[parsed.category];
         
-        // Separa categoria primÃ¡ria | secundÃ¡ria
+        // Separa categoria primária | secundária
         if (parsed.category.includes(' | ')) {
           const parts = parsed.category.split(' | ');
           primaryCategory = parts[0].trim();
@@ -1137,7 +1137,7 @@ Use um tom profissional e claro em portuguÃªs.`;
       
       return {
         title: typeof parsed.title === 'string' ? parsed.title.trim() : '',
-        description: typeof parsed.description === 'string' ? parsed.description.trim() : (sanitizedMessage || '[Imagem anexada - descriÃ§Ã£o nÃ£o gerada]'),
+        description: typeof parsed.description === 'string' ? parsed.description.trim() : (sanitizedMessage || '[Imagem anexada - descrição não gerada]'),
         category: parsed.category,
         categoryId: categoryId,
         primaryCategory: primaryCategory,
@@ -1145,13 +1145,13 @@ Use um tom profissional e claro em portuguÃªs.`;
         source: 'gemini'
       };
     } catch (error) {
-      console.warn('NÃ£o foi possÃ­vel interpretar resposta da Gemini como JSON. Texto bruto:', combinedText);
+      console.warn('Não foi possível interpretar resposta da Gemini como JSON. Texto bruto:', combinedText);
       return {
         title: '',
-        description: sanitizedMessage || '[Imagem anexada - descriÃ§Ã£o nÃ£o gerada]',
+        description: sanitizedMessage || '[Imagem anexada - descrição não gerada]',
         category: null,
         categoryId: null,
-        notice: 'SugestÃ£o recebida em formato inesperado. ConteÃºdo original carregado.',
+        notice: 'Sugestão recebida em formato inesperado. Conteúdo original carregado.',
         source: 'gemini'
       };
     }
@@ -1159,22 +1159,22 @@ Use um tom profissional e claro em portuguÃªs.`;
 
   async generateCommentRefinement(originalComment, context = {}) {
     const sanitizedComment = originalComment.trim().slice(0, 4000);
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
 
     const ticketInfo = context.ticketId ? `#${context.ticketId}` : 'desconhecido';
-    const contactInfo = context.contactName ? context.contactName : (context.contactPhone || 'Contato nÃ£o identificado');
+    const contactInfo = context.contactName ? context.contactName : (context.contactPhone || 'Contato não identificado');
 
-    const prompt = `Atue como um analista de suporte tÃ©cnico experiente. Reescreva o comentÃ¡rio abaixo em portuguÃªs, mantendo todas as informaÃ§Ãµes essenciais, mas deixando o texto claro, objetivo e profissional. NÃ£o inclua saudaÃ§Ãµes nem repita informaÃ§Ãµes jÃ¡ implÃ­citas. Se faltar contexto, apenas organize melhor o que jÃ¡ existe.
+    const prompt = `Atue como um analista de suporte técnico experiente. Reescreva o comentário abaixo em português, mantendo todas as informações essenciais, mas deixando o texto claro, objetivo e profissional. Não inclua saudações nem repita informações já implícitas. Se faltar contexto, apenas organize melhor o que já existe.
 
 Contexto:
 - Chamado: ${ticketInfo}
 - Contato: ${contactInfo}
 
-Comente somente o necessÃ¡rio para registrar o andamento ou comunicaÃ§Ã£o com o cliente.
+Comente somente o necessário para registrar o andamento ou comunicação com o cliente.
 
 Retorne APENAS em JSON com o formato {"comment":"texto refinado"}.
 
-ComentÃ¡rio original: """${sanitizedComment}"""`;
+Comentário original: """${sanitizedComment}"""`;
 
     const payload = {
       contents: [
@@ -1225,7 +1225,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
       const refined = typeof parsed.comment === 'string' ? parsed.comment.trim() : '';
       return refined || sanitizedComment;
     } catch (error) {
-      console.warn('NÃ£o foi possÃ­vel interpretar resposta da Gemini para comentÃ¡rio. Texto bruto:', combinedText);
+      console.warn('Não foi possível interpretar resposta da Gemini para comentário. Texto bruto:', combinedText);
       return sanitizedComment;
     }
   }
@@ -1233,20 +1233,20 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
   addToolbarButton() {
     
     
-    // Remove botÃ£o existente se houver
+    // Remove botão existente se houver
     document.getElementById('ti-toolbar-btn')?.remove();
 
-    // Usa o header salvo (da conversa, nÃ£o da lista)
+    // Usa o header salvo (da conversa, não da lista)
     const chatHeader = this.getChatHeader();
 
     if (!chatHeader) {
-      console.error('âŒ Header da conversa nÃ£o encontrado');
+      console.error('� Header da conversa não encontrado');
       return;
     }
 
     
 
-    // Tenta mÃºltiplos seletores para encontrar o container de botÃµes
+    // Tenta múltiplos seletores para encontrar o container de botões
     const headerButtons = chatHeader.querySelector('div[role="button"]')?.parentElement ||
                          chatHeader.querySelector('[aria-label]')?.parentElement ||
                          chatHeader.querySelector('button')?.parentElement ||
@@ -1274,13 +1274,13 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
       headerButtons.appendChild(button);
       
     } else {
-      console.error('âŒ Container de botÃµes nÃ£o encontrado no header');
+      console.error('� Container de botões não encontrado no header');
       
     }
   }
 
   ensureToolbarButton() {
-    // NÃ£o faz nada - painel agora Ã© fixo, sem necessidade de botÃ£o
+    // Não faz nada - painel agora é fixo, sem necessidade de botão
     return;
   }
 
@@ -1303,23 +1303,23 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
       panel.classList.remove('hidden');
       document.body.classList.remove('ti-panel-hidden');
       
-      // ForÃ§a recalculo do layout apÃ³s pequeno delay
+      // Força recalculo do layout após pequeno delay
       setTimeout(() => {
         window.dispatchEvent(new Event('resize'));
       }, 50);
       
-      // Limpa APENAS os tickets (mantÃ©m contato e telefone)
+      // Limpa APENAS os tickets (mantém contato e telefone)
       
       this.tickets = [];
       
       const shouldLoadTickets = !this.suppressNextTicketLoad;
       this.suppressNextTicketLoad = false;
 
-      // Aguarda painel abrir, entÃ£o verifica se tem contato e carrega tickets
+      // Aguarda painel abrir, então verifica se tem contato e carrega tickets
       setTimeout(() => {
         
         
-        // Se nÃ£o tem contato detectado, forÃ§a detecÃ§Ã£o
+        // Se não tem contato detectado, força detecção
         if (!this.currentPhone) {
           
           this.detectContactChange();
@@ -1345,12 +1345,12 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
       panel.classList.add('hidden');
       document.body.classList.add('ti-panel-hidden');
       
-      // ForÃ§a recalculo do layout
+      // Força recalculo do layout
       setTimeout(() => {
         window.dispatchEvent(new Event('resize'));
       }, 50);
       
-      // Garante que o botÃ£o permanece visÃ­vel
+      // Garante que o botão permanece visível
       setTimeout(() => {
         
         this.ensureToolbarButton();
@@ -1367,7 +1367,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
                               document.querySelector('[data-testid="conversation-panel"]') ||
                               document.querySelector('[data-testid="conversation-panel-body"]');
     
-    // Extrai nÃºmero de telefone PRIMEIRO (mais confiÃ¡vel que header)
+    // Extrai número de telefone PRIMEIRO (mais confiável que header)
     const phone = this.extractPhoneNumber();
     
     const hasConversation = !!phone || !!headerElement || !!conversationPanel;
@@ -1402,18 +1402,18 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
         return;
       }
 
-      console.warn('âš ï¸ NÃ£o foi possÃ­vel detectar o telefone apÃ³s mÃºltiplas tentativas');
+      console.warn('⚠� Não foi possível detectar o telefone após múltiplas tentativas');
     } else {
       this.pendingPhoneRetryCount = 0;
     }
     
-    // Extrai nome do contato - tenta mÃºltiplos seletores
+    // Extrai nome do contato - tenta múltiplos seletores
     let contactName = '';
     let shouldRetryName = false;
     
     
     
-    // SOLUÃ‡ÃƒO DEFINITIVA: SEMPRE re-buscar header (nunca usar cache/parÃ¢metro)
+    // SOLUÇÃO DEFINITIVA: SEMPRE re-buscar header (nunca usar cache/parâmetro)
     const header = document.querySelector('header[data-testid="conversation-header"]') ||
                    document.querySelector('#main header') ||
                    document.querySelector('div[data-testid="conversation-header"] header') ||
@@ -1422,9 +1422,9 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
     if (header) {
       
       
-      // MÃ‰TODO DEFINITIVO: Buscar o span de nome usando a estrutura conhecida
+      // MÉTODO DEFINITIVO: Buscar o span de nome usando a estrutura conhecida
       
-      // 1. Buscar pelo atributo title (mais confiÃ¡vel - contÃ©m nome completo)
+      // 1. Buscar pelo atributo title (mais confiável - contém nome completo)
       const spanWithTitle = header.querySelector('span[dir="auto"][title]');
       if (spanWithTitle?.title) {
         contactName = spanWithTitle.title.trim();
@@ -1452,11 +1452,11 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
         return !invalidPatterns.some(pattern => pattern.test(normalized));
       };
 
-      // 2. Buscar no container principal de informaÃ§Ãµes
+      // 2. Buscar no container principal de informações
       if (!contactName) {
         const headerContent = header.querySelector('div[role="button"]');
         if (headerContent) {
-          // Pega TODOS os spans, filtra os que tÃªm texto vÃ¡lido
+          // Pega TODOS os spans, filtra os que têm texto válido
           const allSpans = Array.from(headerContent.querySelectorAll('span[dir="auto"]'));
           
           
@@ -1514,7 +1514,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
       
     }
 
-    // MÃ©todo 2: Busca no chat selecionado da lista lateral
+    // Método 2: Busca no chat selecionado da lista lateral
     if (!contactName) {
       
       const selectedChat = document.querySelector('[data-testid="cell-frame-container"][aria-selected="true"]') ||
@@ -1536,7 +1536,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
       }
     }
 
-    // MÃ©todo 3: Busca em atributos do header
+    // Método 3: Busca em atributos do header
     if (!contactName && header) {
       
       const ariaLabel = header.getAttribute('aria-label');
@@ -1546,7 +1546,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
       }
     }
 
-    // MÃ©todo 4: Se nÃ£o encontrou nome ou pegou um nÃºmero, usa fallback
+    // Método 4: Se não encontrou nome ou pegou um número, usa fallback
     const nameLooksLikePhone = contactName && (/^\+?\d+$/.test(contactName) || /^Contato \(/.test(contactName));
     if (!contactName || nameLooksLikePhone) {
       
@@ -1590,7 +1590,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
       
       this.tickets = [];
       
-      // SEMPRE atualiza as informaÃ§Ãµes do contato no painel
+      // SEMPRE atualiza as informações do contato no painel
       
       this.updateContactInfo();
       
@@ -1603,7 +1603,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
         
       }
     } else if (this.currentContact && this.currentPhone) {
-      // Mesmo sem mudanÃ§a, SEMPRE atualiza o display
+      // Mesmo sem mudança, SEMPRE atualiza o display
       
       this.updateContactInfo();
       
@@ -1618,17 +1618,17 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
       this.pendingNameRetryCount = 0;
     }
 
-    // Configura aÃ§Ãµes em mensagens ao confirmar conversa ativa
+    // Configura ações em mensagens ao confirmar conversa ativa
     this.setupMessageActions();
 
-    // ReforÃ§a a presenÃ§a do botÃ£o no header
+    // Reforça a presença do botão no header
     this.ensureToolbarButton();
   }
 
   extractPhoneNumber() {
     
     
-    // MÃ©todo 1: Extrair da URL (MAIS CONFIÃVEL)
+    // Método 1: Extrair da URL (MAIS CONFI�VEL)
     const urlMatch = window.location.href.match(/\/(\d+)@/);
     if (urlMatch) {
       const phone = urlMatch[1];
@@ -1636,7 +1636,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
       return phone;
     }
     
-    // MÃ©todo 2: Buscar em elementos com data-id DENTRO da Ã¡rea principal
+    // Método 2: Buscar em elementos com data-id DENTRO da área principal
     const mainArea = document.querySelector('[role="main"]') || document.querySelector('#main');
     const elementsWithDataId = mainArea ? mainArea.querySelectorAll('[data-id]') : [];
     for (let element of elementsWithDataId) {
@@ -1650,7 +1650,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
       }
     }
     
-    // MÃ©todo 3: Buscar no header da conversa
+    // Método 3: Buscar no header da conversa
     const header = document.querySelector('[role="main"] header') || 
                    document.querySelector('header[data-testid="conversation-header"]');
     
@@ -1665,7 +1665,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
       }
     }
     
-    // MÃ©todo 4: Buscar na Ã¡rea de mensagens
+    // Método 4: Buscar na área de mensagens
     const messagesArea = document.querySelector('[data-testid="conversation-panel-messages"]');
     if (messagesArea) {
       const parent = messagesArea.closest('[data-id]');
@@ -1679,7 +1679,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
       }
     }
     
-    // MÃ©todo 5: Ãšltima tentativa - buscar em span com tÃ­tulo
+    // Método 5: Última tentativa - buscar em span com título
     const titleSpan = document.querySelector('[role="main"] span[title]');
     if (titleSpan) {
       const title = titleSpan.getAttribute('title');
@@ -1690,7 +1690,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
       }
     }
     
-    console.warn('âš ï¸ NÃ£o foi possÃ­vel extrair o telefone');
+    console.warn('⚠� Não foi possível extrair o telefone');
     
     
     return null;
@@ -1702,19 +1702,19 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
     
     const infoDiv = document.getElementById('ti-contact-info');
     if (!infoDiv) {
-      console.error('âŒ Elemento ti-contact-info nÃ£o encontrado!');
+      console.error('� Elemento ti-contact-info não encontrado!');
       return;
     }
 
     if (this.currentContact && this.currentPhone) {
       infoDiv.classList.remove('hidden');
       
-      // Garante que mostra o NOME no campo de contato (nÃ£o o nÃºmero)
+      // Garante que mostra o NOME no campo de contato (não o número)
       const contactName = this.currentContact;
       
       
       
-      // Se o nome for do tipo "Contato (nÃºmero)", exibe mensagem apropriada
+      // Se o nome for do tipo "Contato (número)", exibe mensagem apropriada
       if (contactName.startsWith('Contato (')) {
         infoDiv.querySelector('.ti-contact-name').textContent = 'Sem nome salvo';
         
@@ -1728,7 +1728,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
     } else {
       // Nenhum contato selecionado
       infoDiv.classList.remove('hidden');
-      infoDiv.querySelector('.ti-contact-name').textContent = 'ðŸ“­ Nenhuma conversa selecionada';
+      infoDiv.querySelector('.ti-contact-name').textContent = '📭 Nenhuma conversa selecionada';
       infoDiv.querySelector('.ti-contact-phone').textContent = 'Abra um chat para visualizar tickets';
       
     }
@@ -1744,15 +1744,15 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
     
     const listDiv = document.getElementById('ti-tickets-list');
     if (!listDiv) {
-      console.error('âŒ Elemento ti-tickets-list nÃ£o encontrado!');
+      console.error('� Elemento ti-tickets-list não encontrado!');
       return;
     }
     
     if (!this.currentPhone) {
-      console.warn('âš ï¸ Telefone nÃ£o identificado');
+      console.warn('⚠� Telefone não identificado');
       listDiv.innerHTML = `
         <div class="ti-empty-state">
-          <div class="ti-empty-icon">ðŸ“­</div>
+          <div class="ti-empty-icon">📭</div>
           <div class="ti-empty-title">Nenhuma conversa selecionada</div>
           <div class="ti-empty-message">Abra um chat para visualizar os tickets</div>
         </div>
@@ -1760,10 +1760,10 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
       return;
     }
 
-    listDiv.innerHTML = '<div class="ti-loading">ðŸ” Buscando chamados...</div>';
+    listDiv.innerHTML = '<div class="ti-loading">� Buscando chamados...</div>';
 
     try {
-      // Remove +55 ou 55 do inÃ­cio do telefone usando funÃ§Ã£o auxiliar
+      // Remove +55 ou 55 do início do telefone usando função auxiliar
       const cleanPhone = this.cleanPhoneForAPI(this.currentPhone);
 
       
@@ -1792,14 +1792,14 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('âŒ Erro na API:', errorText);
+        console.error('� Erro na API:', errorText);
         throw new Error(`Erro ${response.status}: ${response.statusText}`);
       }
       
       const data = await response.json();
       
       
-      // Adapta formato Milvus para o formato da extensÃ£o
+      // Adapta formato Milvus para o formato da extensão
       const tickets = data.lista ? data.lista.map(ticket => ({
         id: ticket.codigo,
         title: ticket.assunto,
@@ -1819,7 +1819,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
       
       
       
-      // VALIDAÃ‡ÃƒO APENAS POR NÃšMERO (sem nome)
+      // VALIDAÇÃO APENAS POR NÚMERO (sem nome)
       const normalizedCurrentPhone = this.cleanPhoneForAPI(this.currentPhone);
       
 
@@ -1842,7 +1842,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
       
       this.renderTickets(filteredTickets);
       
-      // Mensagem quando nÃ£o encontrar nada
+      // Mensagem quando não encontrar nada
       if (filteredTickets.length === 0) {
         
         listDiv.innerHTML = `
@@ -1853,16 +1853,16 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
         `;
       }
     } catch (error) {
-      console.error('âŒ Erro ao carregar chamados:', error);
+      console.error('� Erro ao carregar chamados:', error);
       listDiv.innerHTML = `
         <div class="ti-error">
-          <p>âŒ Erro ao carregar chamados</p>
+          <p>� Erro ao carregar chamados</p>
           <small>${error.message}</small>
           <button onclick="document.querySelector('#ti-refresh-tickets').click()" 
                   style="margin-top: 8px; padding: 6px 12px; background: #00a884; color: white; border: none; border-radius: 4px; cursor: pointer;">
-            ðŸ”„ Tentar novamente
+            🔄 Tentar novamente
           </button>
-          <p class="ti-hint" style="margin-top: 8px; font-size: 12px; color: #8696a0;">Verifique se o token de autenticaÃ§Ã£o estÃ¡ configurado</p>
+          <p class="ti-hint" style="margin-top: 8px; font-size: 12px; color: #8696a0;">Verifique se o token de autenticação está configurado</p>
         </div>
       `;
     }
@@ -1874,7 +1874,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
 
     
     
-    // SEMPRE limpa o conteÃºdo anterior para evitar cache visual
+    // SEMPRE limpa o conteúdo anterior para evitar cache visual
     listDiv.innerHTML = '';
 
     if (tickets.length === 0) {
@@ -1888,7 +1888,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
           <span class="ti-ticket-id">#${ticket.id}</span>
           <span class="ti-ticket-status ti-status-${ticket.status}">${this.getStatusLabel(ticket.status)}</span>
         </div>
-        <div class="ti-ticket-title">${ticket.title || 'Sem tÃ­tulo'}</div>
+        <div class="ti-ticket-title">${ticket.title || 'Sem título'}</div>
         <div class="ti-ticket-meta">
           <span>Criado em: ${this.formatDate(ticket.createdAt)}</span>
           ${ticket.priority ? `<span class="ti-priority ti-priority-${ticket.priority}">${this.getPriorityLabel(ticket.priority)}</span>` : ''}
@@ -1903,7 +1903,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
 
     listDiv.innerHTML = ticketsHtml;
 
-    // Adiciona event listeners aos botÃµes
+    // Adiciona event listeners aos botões
     listDiv.querySelectorAll('.ti-btn-view').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const ticketId = e.target.dataset.ticketId;
@@ -1943,11 +1943,11 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
       
       // Encontra o ticket na lista local
       const ticket = this.tickets.find(t => t.id == ticketId);
-      if (!ticket) throw new Error('Chamado nÃ£o encontrado');
+      if (!ticket) throw new Error('Chamado não encontrado');
       
-      // Extrai comentÃ¡rios dos acompanhamentos
+      // Extrai comentários dos acompanhamentos
       const comments = data.retorno ? data.retorno
-        .filter(log => log.log_tipo_id === 6 && !log.is_excluido) // Tipo 6 = comentÃ¡rios
+        .filter(log => log.log_tipo_id === 6 && !log.is_excluido) // Tipo 6 = comentários
         .map(log => ({
           id: log.data,
           author: log.pessoa || log.tecnico || 'Sistema',
@@ -1977,8 +1977,8 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
             <span>${ticket.title || 'Sem assunto'}</span>
           </div>
           <div class="ti-detail-row">
-            <label>DescriÃ§Ã£o:</label>
-            <p>${ticket.description || 'Sem descriÃ§Ã£o'}</p>
+            <label>Descrição:</label>
+            <p>${ticket.description || 'Sem descrição'}</p>
           </div>
           ${ticket.priority ? `
             <div class="ti-detail-row">
@@ -1988,7 +1988,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
           ` : ''}
           ${ticket.technician ? `
             <div class="ti-detail-row">
-              <label>TÃ©cnico:</label>
+              <label>Técnico:</label>
               <span>${ticket.technician}</span>
             </div>
           ` : ''}
@@ -2044,7 +2044,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
 
     const originalContent = listDiv.innerHTML;
 
-    // SEMPRE pega o contato ATUAL do estado, nÃ£o do prefill
+    // SEMPRE pega o contato ATUAL do estado, não do prefill
     const contactName = this.currentContact ?? prefill.contactName ?? '';
     const contactPhone = this.currentPhone ?? prefill.contactPhone ?? '';
     const originalMessage = prefill.originalMessage ?? '';
@@ -2057,7 +2057,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
       <div class="ti-ticket-context-contact">
         <span class="ti-context-label">Contato</span>
         <strong>${escape(contactName) || 'Sem nome salvo'}</strong>
-        <span class="ti-context-phone">${contactPhone ? escape(contactPhone) : 'Telefone nÃ£o identificado'}</span>
+        <span class="ti-context-phone">${contactPhone ? escape(contactPhone) : 'Telefone não identificado'}</span>
       </div>
     ` : '';
 
@@ -2065,13 +2065,13 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
       <div class="ti-ticket-context-message">
         <span class="ti-context-label">Mensagem selecionada</span>
         <p>${escape(originalMessage).replace(/\n/g, '<br>')}</p>
-        ${prefill.hasImage ? '<span class="ti-image-indicator">ðŸ–¼ï¸ Imagem anexada e analisada</span>' : ''}
+        ${prefill.hasImage ? '<span class="ti-image-indicator">🖼� Imagem anexada e analisada</span>' : ''}
       </div>
     ` : '';
 
-    let badgeText = 'âœ¨ SugestÃ£o gerada pela Gemini (tÃ­tulo, descriÃ§Ã£o e categorias)';
+    let badgeText = '✨ Sugestão gerada pela Gemini (título, descrição e categorias)';
     if (prefill.hasImage && suggestionSource === 'gemini') {
-      badgeText = 'ðŸ–¼ï¸ SugestÃ£o gerada pela Gemini com anÃ¡lise de imagem';
+      badgeText = '🖼� Sugestão gerada pela Gemini com análise de imagem';
     }
 
     const badgeHtml = suggestionSource === 'gemini' ? `
@@ -2095,16 +2095,16 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
             <input type="text" id="ti-ticket-title" required />
           </div>
           <div class="ti-form-group">
-            <label>DescriÃ§Ã£o *</label>
+            <label>Descrição *</label>
             <textarea id="ti-ticket-description" rows="4" required></textarea>
           </div>
           <div class="ti-form-group">
-            <label>Categoria PrimÃ¡ria</label>
+            <label>Categoria Primária</label>
             <input type="text" id="ti-ticket-cat1" placeholder="Ex: Hardware, Software" />
           </div>
           <div class="ti-form-group">
-            <label>Categoria SecundÃ¡ria</label>
-            <input type="text" id="ti-ticket-cat2" placeholder="Ex: Troca de peÃ§a, InstalaÃ§Ã£o" />
+            <label>Categoria Secundária</label>
+            <input type="text" id="ti-ticket-cat2" placeholder="Ex: Troca de peça, Instalação" />
           </div>
           <div class="ti-form-actions">
             <button type="submit" class="ti-btn ti-btn-primary">Criar Chamado</button>
@@ -2172,7 +2172,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
     const categoria2 = document.getElementById('ti-ticket-cat2')?.value;
 
     try {
-      // Limpa telefone removendo cÃ³digo do paÃ­s (55)
+      // Limpa telefone removendo código do país (55)
       const cleanPhone = this.cleanPhoneForAPI(this.currentPhone);
       
       
@@ -2184,7 +2184,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
         chamado_assunto: assunto,
         chamado_descricao: descricao,
         chamado_email: '',
-        chamado_telefone: cleanPhone, // Envia sem cÃ³digo do paÃ­s
+        chamado_telefone: cleanPhone, // Envia sem código do país
         chamado_contato: this.currentContact || 'WhatsApp',
       };
 
@@ -2228,9 +2228,9 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
     const form = document.createElement('div');
     form.className = 'ti-comment-form';
     form.innerHTML = `
-      <textarea placeholder="Adicionar comentÃ¡rio..." rows="3"></textarea>
+      <textarea placeholder="Adicionar comentário..." rows="3"></textarea>
       <div class="ti-form-actions ti-comment-actions">
-        <button type="button" class="ti-btn-small ti-btn-gemini" title="Refinar comentÃ¡rio com ajuda da IA">âœ¨ Refinar com Gemini</button>
+        <button type="button" class="ti-btn-small ti-btn-gemini" title="Refinar comentário com ajuda da IA">✨ Refinar com Gemini</button>
         <button class="ti-btn-small ti-btn-primary">Enviar</button>
         <button class="ti-btn-small ti-btn-secondary">Cancelar</button>
       </div>
@@ -2251,19 +2251,19 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
       const originalText = textarea.value.trim();
 
       if (!originalText) {
-        this.showMessage('Digite algo antes de pedir ajuda Ã  Gemini.', 'warning');
+        this.showMessage('Digite algo antes de pedir ajuda à Gemini.', 'warning');
         textarea.focus();
         return;
       }
 
       if (!GEMINI_API_KEY) {
-        this.showMessage('Configure a chave da Gemini API nas configuraÃ§Ãµes.', 'error');
+        this.showMessage('Configure a chave da Gemini API nas configurações.', 'error');
         return;
       }
 
       btnGemini.disabled = true;
       const previousLabel = btnGemini.textContent;
-      btnGemini.textContent = 'â³ Refinando...';
+      btnGemini.textContent = '� Refinando...';
 
       try {
         const refined = await this.generateCommentRefinement(originalText, {
@@ -2275,13 +2275,13 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
         if (refined) {
           textarea.value = refined;
           textarea.classList.add('ti-ai-filled');
-          this.showMessage('ComentÃ¡rio refinado pela Gemini. Revise antes de enviar.', 'success');
+          this.showMessage('Comentário refinado pela Gemini. Revise antes de enviar.', 'success');
         } else {
-          this.showMessage('A Gemini nÃ£o conseguiu melhorar este comentÃ¡rio.', 'warning');
+          this.showMessage('A Gemini não conseguiu melhorar este comentário.', 'warning');
         }
       } catch (error) {
-        console.error('Erro ao refinar comentÃ¡rio com Gemini:', error);
-        this.showMessage('NÃ£o foi possÃ­vel refinar o comentÃ¡rio agora.', 'error');
+        console.error('Erro ao refinar comentário com Gemini:', error);
+        this.showMessage('Não foi possível refinar o comentário agora.', 'error');
       } finally {
         btnGemini.disabled = false;
         btnGemini.textContent = previousLabel;
@@ -2332,7 +2332,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
 
     const cleanSubject = subject?.length ? subject : 'Sem assunto informado';
     const messageLines = [
-      'Chamado aberto! âœ“',
+      'Chamado aberto! ✓',
       `Ticket: *#${ticketCode}*`,
       `_Assunto: ${cleanSubject}_`,
       '',
@@ -2343,7 +2343,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
     const sent = await this.sendWhatsAppMessageToCurrentChat(message);
 
     if (!sent) {
-      this.showMessage('Chamado criado, mas nÃ£o consegui enviar a confirmaÃ§Ã£o no WhatsApp.', 'warning');
+      this.showMessage('Chamado criado, mas não consegui enviar a confirmação no WhatsApp.', 'warning');
     }
   }
 
@@ -2357,13 +2357,13 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
                        document.querySelector('#main footer div[contenteditable="true"]');
 
       if (!composer) {
-        console.warn('âœ‰ï¸ Campo de mensagem do WhatsApp nÃ£o encontrado para envio automÃ¡tico.');
+        console.warn('✉� Campo de mensagem do WhatsApp não encontrado para envio automático.');
         return false;
       }
 
       composer.focus();
 
-      // Limpa conteÃºdo atual
+      // Limpa conteúdo atual
       document.execCommand('selectAll', false, null);
       document.execCommand('delete', false, null);
 
@@ -2407,7 +2407,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
                          document.querySelector('[data-testid="compose-btn-send"]');
 
       if (!sendButton) {
-        console.warn('ðŸ›‘ BotÃ£o de enviar mensagem nÃ£o encontrado.');
+        console.warn('🛑 Botão de enviar mensagem não encontrado.');
         return false;
       }
 
@@ -2415,7 +2415,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
       
       return true;
     } catch (error) {
-      console.error('Erro ao enviar mensagem automÃ¡tica:', error);
+      console.error('Erro ao enviar mensagem automática:', error);
       return false;
     }
   }
@@ -2486,7 +2486,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
       closed: 'Fechado',
       paused: 'Pausado',
       scheduled: 'Agendado',
-      conference: 'ConferÃªncia'
+      conference: 'Conferência'
     };
     return labels[status] || status;
   }
@@ -2494,15 +2494,15 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
   getPriorityLabel(priority) {
     const labels = {
       low: 'Baixa',
-      medium: 'MÃ©dia',
+      medium: 'Média',
       high: 'Alta',
       urgent: 'Urgente',
-      critical: 'CrÃ­tico'
+      critical: 'Crítico'
     };
     return labels[priority] || priority;
   }
 
-  // Mapeia status do Milvus para formato da extensÃ£o
+  // Mapeia status do Milvus para formato da extensão
   mapMilvusStatus(status) {
     const statusMap = {
       'AgAtendimento': 'open',
@@ -2510,20 +2510,20 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
       'Atendendo': 'in_progress',
       'Pausado': 'paused',
       'Finalizado': 'closed',
-      'ConferÃªncia': 'conference',
+      'Conferência': 'conference',
       'Agendado': 'scheduled',
       'Expirado': 'closed',
-      'Ag. soluÃ§Ã£o': 'pending'
+      'Ag. solução': 'pending'
     };
     return statusMap[status] || 'open';
   }
 
-  // Mapeia prioridade do Milvus para formato da extensÃ£o
+  // Mapeia prioridade do Milvus para formato da extensão
   mapMilvusPriority(prioridade) {
     const priorityMap = {
-      'CrÃ­tico': 'critical',
+      'Crítico': 'critical',
       'Alta': 'high',
-      'MÃ©dia': 'medium',
+      'Média': 'medium',
       'Baixa': 'low',
       'Urgente': 'urgent'
     };
@@ -2542,13 +2542,13 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
     });
   }
 
-  // Remove cÃ³digo do paÃ­s (55) do telefone para enviar Ã  API
+  // Remove código do país (55) do telefone para enviar à API
   cleanPhoneForAPI(phone) {
     if (!phone) return '';
     
-    let clean = phone.replace(/\D/g, ''); // Remove tudo que nÃ£o Ã© dÃ­gito
+    let clean = phone.replace(/\D/g, ''); // Remove tudo que não é dígito
     
-    // Remove cÃ³digo do paÃ­s 55
+    // Remove código do país 55
     if (clean.startsWith('55')) {
       clean = clean.substring(2);
     }
@@ -2558,7 +2558,7 @@ ComentÃ¡rio original: """${sanitizedComment}"""`;
   }
 }
 
-// Inicializa a extensÃ£o quando o DOM estiver pronto
+// Inicializa a extensão quando o DOM estiver pronto
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     new WhatsAppSupportExtension();
