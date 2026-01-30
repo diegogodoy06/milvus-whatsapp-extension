@@ -121,6 +121,22 @@ class WhatsAppSupportExtension {
     
     // Aguarda o WhatsApp Web carregar para configurar observers
     this.waitForWhatsAppLoad();
+    
+    // Verificacao periodica para garantir que o painel exista
+    this.startPanelWatcher();
+  }
+  
+  startPanelWatcher() {
+    // Verifica a cada 5 segundos se o painel ainda existe
+    setInterval(() => {
+      const panel = document.getElementById('ti-support-panel');
+      const floatingBtn = document.getElementById('ti-floating-toggle');
+      
+      if (!panel || !floatingBtn) {
+        console.log('[TI Support] Painel removido, reinjetando...');
+        this.injectPanel();
+      }
+    }, 5000);
   }
 
   scheduleContactDetection(delay = 400, reason = '') {
@@ -204,6 +220,16 @@ class WhatsAppSupportExtension {
   }
 
   injectPanel() {
+    // Remove painel existente se houver (evita duplicatas)
+    const existingPanel = document.getElementById('ti-support-panel');
+    if (existingPanel) {
+      existingPanel.remove();
+    }
+    const existingButton = document.getElementById('ti-floating-toggle');
+    if (existingButton) {
+      existingButton.remove();
+    }
+    
     // Cria o container do painel lateral
     const panel = document.createElement('div');
     panel.id = 'ti-support-panel';
@@ -973,7 +999,7 @@ class WhatsAppSupportExtension {
 
   async generateTicketSuggestion(messageText, imageData = null) {
     const sanitizedMessage = messageText ? messageText.trim().slice(0, 4000) : '';
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
 
     // Lista de categorias disponÃ­veis para o Gemini escolher
     const categoriesText = Object.keys(MILVUS_CATEGORIES).join('\n- ');
@@ -1133,7 +1159,7 @@ Use um tom profissional e claro em portuguÃªs.`;
 
   async generateCommentRefinement(originalComment, context = {}) {
     const sanitizedComment = originalComment.trim().slice(0, 4000);
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
 
     const ticketInfo = context.ticketId ? `#${context.ticketId}` : 'desconhecido';
     const contactInfo = context.contactName ? context.contactName : (context.contactPhone || 'Contato nÃ£o identificado');
