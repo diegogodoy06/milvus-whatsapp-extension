@@ -1075,7 +1075,7 @@ Use um tom profissional e claro em português.`;
       generationConfig: {
         temperature: 0.35,
         topP: 0.95,
-        maxOutputTokens: 512
+        maxOutputTokens: 2048
       }
     };
 
