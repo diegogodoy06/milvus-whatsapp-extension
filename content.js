@@ -1,4 +1,4 @@
-// Content Script - Injetado no WhatsApp Web
+﻿// Content Script - Injetado no WhatsApp Web
 
 
 // Configuração da API Milvus (pode ser alterada via popup)
@@ -96,7 +96,7 @@ class WhatsAppSupportExtension {
     this.currentContact = null;
     this.currentPhone = null;
     this.tickets = [];
-    this.panelVisible = false;
+    this.panelVisible = true;
     this.headerObserver = null;
     this.mainObserver = null;
     this.chatListObserver = null;
@@ -127,16 +127,9 @@ class WhatsAppSupportExtension {
   }
   
   startPanelWatcher() {
-    // Verifica a cada 5 segundos se o painel ainda existe
-    setInterval(() => {
-      const panel = document.getElementById('ti-support-panel');
-      const floatingBtn = document.getElementById('ti-floating-toggle');
-      
-      if (!panel || !floatingBtn) {
-        console.log('[TI Support] Painel removido, reinjetando...');
-        this.injectPanel();
-      }
-    }, 5000);
+    // Desabilitado - causava travamentos
+    // O painel agora é injetado apenas uma vez e o CSS garante visibilidade
+    return;
   }
 
   scheduleContactDetection(delay = 400, reason = '') {
@@ -200,15 +193,12 @@ class WhatsAppSupportExtension {
       if (hasLoaded) {
         clearInterval(checkInterval);
         
+        console.log('[TI Support] WhatsApp carregado');
         
-        // Mostra o painel automaticamente
+        // Configura observers para detectar mudanças de contato com delay maior
         setTimeout(() => {
-          
-          this.togglePanel(true);
-        }, 500);
-        
-        // Configura observers para detectar mudanças de contato
-        this.setupObservers();
+          this.setupObservers();
+        }, 2000);
         
       } else if (attempts > 60) {
         clearInterval(checkInterval);
@@ -233,7 +223,7 @@ class WhatsAppSupportExtension {
     // Cria o container do painel lateral
     const panel = document.createElement('div');
     panel.id = 'ti-support-panel';
-    panel.className = 'ti-support-panel hidden';
+    panel.className = 'ti-support-panel';
     panel.innerHTML = `
       <div class="ti-panel-header">
         <h2>
@@ -242,11 +232,6 @@ class WhatsAppSupportExtension {
           </svg>
           Chamados de Suporte
         </h2>
-        <button id="ti-close-panel" class="ti-btn-icon" title="Fechar painel">
-          <svg viewBox="0 0 24 24" width="20" height="20">
-            <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-          </svg>
-        </button>
       </div>
       
       <div class="ti-panel-content">
@@ -281,124 +266,112 @@ class WhatsAppSupportExtension {
     `;
 
     // Injeta direto no BODY para garantir que sempre apareça
-    
+    console.log('[TI Support] Injetando painel...');
     document.body.appendChild(panel);
     
-    // Inicializa com painel oculto
-    document.body.classList.add('ti-panel-hidden');
+    // Painel sempre visível - remover classe hidden
+    document.body.classList.remove('ti-panel-hidden');
     
-    // Cria botão flutuante para abrir/fechar o painel
-    this.createFloatingButton();
-    
-    this.setupEventListeners();
+    // Aplica estilos de layout PRIMEIRO
     this.adjustWhatsAppLayout();
     
+    // Depois configura event listeners
+    this.setupEventListeners();
     
+    console.log('[TI Support] Painel injetado com sucesso!');
   }
 
   createFloatingButton() {
-    const button = document.createElement('button');
-    button.id = 'ti-floating-toggle';
-    button.className = 'ti-floating-toggle';
-    button.title = 'Abrir/Fechar Chamados';
-    button.innerHTML = `
-      <svg viewBox="0 0 24 24" width="28" height="28">
-        <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-      </svg>
-    `;
-    
-    button.addEventListener('click', () => {
-      
-      this.togglePanel();
-    });
-    
-    document.body.appendChild(button);
-    
+    // Botão flutuante removido - painel sempre visível
+    return;
   }
 
   adjustWhatsAppLayout() {
-    // Ajusta o layout do WhatsApp para painel FIXO lateral
+    // Verifica se o estilo já existe para evitar duplicatas
+    const existingStyle = document.getElementById('ti-layout-adjustments');
+    if (existingStyle) {
+      return; // Já foi aplicado
+    }
+    
+    // Ajusta o layout do WhatsApp para painel FIXO lateral - SEMPRE VISÍVEL
     const style = document.createElement('style');
     style.id = 'ti-layout-adjustments';
     style.textContent = `
-      /* Força o WhatsApp a deixar espaço para o painel fixo */
-      /* Aplica em múltiplos elementos para garantir compatibilidade */
-      body:not(.ti-panel-hidden) #app,
-      body:not(.ti-panel-hidden) #app > div,
-      body:not(.ti-panel-hidden) #app > div > div,
-      body:not(.ti-panel-hidden) [data-testid="chat-list"],
-      body:not(.ti-panel-hidden) #main,
-      body:not(.ti-panel-hidden) [role="main"] {
+      /* Garante que o painel da extensão esteja sempre visível */
+      #ti-support-panel {
+        display: flex !important;
+        position: fixed !important;
+        right: 0 !important;
+        top: 0 !important;
+        width: 400px !important;
+        height: 100vh !important;
+        z-index: 9999 !important;
+        background: #ffffff !important;
+      }
+      
+      /* Tema escuro */
+      body[data-theme="dark"] #ti-support-panel {
+        background: #111b21 !important;
+      }
+      
+      /* Força o WhatsApp a deixar espaço para o painel fixo - SEMPRE */
+      /* Seletores atualizados para nova estrutura do WhatsApp Web 2024/2025 */
+      #app {
+        width: calc(100vw - 400px) !important;
         max-width: calc(100vw - 400px) !important;
-        transition: max-width 0.3s ease !important;
+        margin-right: 400px !important;
       }
       
-      /* Garante que o container principal respeite o espaço */
-      body:not(.ti-panel-hidden) #app {
-        width: calc(100% - 400px) !important;
-        transition: width 0.3s ease !important;
-      }
-      
-      /* Quando o painel está escondido, remove as restrições */
-      body.ti-panel-hidden #app,
-      body.ti-panel-hidden #app > div,
-      body.ti-panel-hidden #app > div > div,
-      body.ti-panel-hidden [data-testid="chat-list"],
-      body.ti-panel-hidden #main,
-      body.ti-panel-hidden [role="main"] {
-        max-width: 100vw !important;
+      /* Container principal do WhatsApp */
+      #app > div,
+      #app > div > div,
+      #app > div > div > div {
+        max-width: 100% !important;
         width: 100% !important;
       }
       
+      /* Wrapper principal que contém sidebar e chat */
+      [data-testid="web"] {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      
+      /* Lista de chats e área de conversa */
+      [data-testid="chat-list"],
+      #main,
+      [role="main"],
+      [data-testid="default-user"],
+      [data-testid="conversation-panel-wrapper"] {
+        max-width: 100% !important;
+      }
+      
       /* Evita que elementos flutuantes do WhatsApp fiquem sobre o painel */
-      body:not(.ti-panel-hidden) [data-testid="menu"],
-      body:not(.ti-panel-hidden) [data-testid="popup"] {
+      [data-testid="menu"],
+      [data-testid="popup"] {
         right: auto !important;
       }
       
       /* Esconde o painel quando o visualizador de mídia está aberto */
-      /* O visualizador de mídia deve ter z-index maior e ocupar tela cheia */
-      body:has([data-testid="media-viewer"]) .ti-support-panel,
-      body:has([data-testid="image-preview"]) .ti-support-panel,
-      body:has([data-testid="media-viewer-modal"]) .ti-support-panel,
-      body:has([data-testid="lightbox"]) .ti-support-panel,
-      body:has([data-testid="image-viewer"]) .ti-support-panel,
-      body:has([role="dialog"][aria-modal="true"]) .ti-support-panel,
-      body:has(.overlay) .ti-support-panel,
-      body:has(div[tabindex="-1"] > div > img[draggable="false"]) .ti-support-panel {
-        display: none !important;
-      }
-      
-      /* Também esconde o botão flutuante quando visualizador está aberto */
-      body:has([data-testid="media-viewer"]) .ti-floating-toggle,
-      body:has([data-testid="image-preview"]) .ti-floating-toggle,
-      body:has([data-testid="media-viewer-modal"]) .ti-floating-toggle,
-      body:has([data-testid="lightbox"]) .ti-floating-toggle,
-      body:has([data-testid="image-viewer"]) .ti-floating-toggle,
-      body:has([role="dialog"][aria-modal="true"]) .ti-floating-toggle,
-      body:has(.overlay) .ti-floating-toggle,
-      body:has(div[tabindex="-1"] > div > img[draggable="false"]) .ti-floating-toggle {
+      body:has([data-testid="media-viewer"]) #ti-support-panel,
+      body:has([data-testid="image-preview"]) #ti-support-panel,
+      body:has([role="dialog"][aria-modal="true"]) #ti-support-panel {
         display: none !important;
       }
       
       /* Restaura o layout do WhatsApp quando visualizador está aberto */
       body:has([data-testid="media-viewer"]) #app,
       body:has([data-testid="image-preview"]) #app,
-      body:has([data-testid="media-viewer-modal"]) #app,
       body:has([role="dialog"][aria-modal="true"]) #app {
-        width: 100% !important;
+        width: 100vw !important;
         max-width: 100vw !important;
+        margin-right: 0 !important;
       }
     `;
     document.head.appendChild(style);
+    console.log('[TI Support] Estilos de layout aplicados');
   }
 
   setupEventListeners() {
-    // Botão de fechar painel
-    document.getElementById('ti-close-panel')?.addEventListener('click', () => {
-      this.togglePanel(false);
-    });
-
     // Botão de novo chamado
     document.getElementById('ti-new-ticket')?.addEventListener('click', () => {
       this.showNewTicketForm();
@@ -444,28 +417,13 @@ class WhatsAppSupportExtension {
   }
 
   setupObservers() {
+    console.log('[TI Support] Configurando observers...');
     
+    // Detecção de mudança de contato apenas por clique (muito mais leve)
+    // Removemos observers pesados que causavam travamento
     
-    // Observer na URL para detectar mudanças de conversa
-    let lastUrl = window.location.href;
-    const urlObserver = new MutationObserver(() => {
-      const currentUrl = window.location.href;
-      if (currentUrl !== lastUrl) {
-        
-        lastUrl = currentUrl;
-        this.scheduleContactDetection(900, 'mudança de URL');
-      }
-    });
-    
-    urlObserver.observe(document.body, { 
-      childList: true, 
-      subtree: true 
-    });
-    
-    
-    
-    // Detecção inicial imediata
-    this.scheduleContactDetection(1000, 'detecção inicial');
+    // Detecção inicial após delay
+    this.scheduleContactDetection(2000, 'detecção inicial');
     
     // Tenta configurar observer no header se existir
     const header = this.getChatHeader();
@@ -473,7 +431,7 @@ class WhatsAppSupportExtension {
       this.observeHeader(header);
     }
     
-    // Observer no main element para detectar quando um header é criado
+    // Observer LEVE no main element para detectar quando um header é criado
     const mainElement = document.querySelector('[role="main"]') || document.querySelector('#main');
     if (mainElement && !this.mainObserver) {
       let mainDebounceTimer = null;
@@ -482,98 +440,88 @@ class WhatsAppSupportExtension {
         mainDebounceTimer = setTimeout(() => {
           const newHeader = this.getChatHeader();
           if (newHeader && newHeader !== this.chatHeader) {
-            
             this.observeHeader(newHeader);
-            this.scheduleContactDetection(400, 'header recriado');
+            this.scheduleContactDetection(500, 'header recriado');
           }
-        }, 500);
+        }, 1000);
       });
 
       this.mainObserver.observe(mainElement, { 
         childList: true, 
         subtree: false
       });
-      
     }
 
-    // Observer na lista de chats para capturar seleção de novos contatos
+    // Captura clique na lista de chats (muito mais leve que observer)
     const chatList = document.querySelector('[data-testid="chat-list"]') ||
                      document.querySelector('[role="grid"]');
 
-    if (chatList && !this.chatListObserver) {
-      let chatListDebounce = null;
-      this.chatListObserver = new MutationObserver(() => {
-        if (chatListDebounce) clearTimeout(chatListDebounce);
-        chatListDebounce = setTimeout(() => {
-          
-          this.scheduleContactDetection(350, 'lista de chats atualizada');
-        }, 200);
-      });
-
-      this.chatListObserver.observe(chatList, {
-        childList: true,
-        subtree: true
-      });
-
-      // Captura clique direto nos contatos
+    if (chatList) {
       chatList.addEventListener('click', () => {
-        
-        this.scheduleContactDetection(350, 'clique na lista de chats');
-      }, true);
-
-      
+        this.scheduleContactDetection(800, 'clique na lista de chats');
+      }, { passive: true, capture: true });
     }
 
-    // Configura ações nas mensagens (botão de chamado)
+    // Configura ações nas mensagens com delay maior
+    setTimeout(() => this.setupMessageActions(), 3000);
     
-    setTimeout(() => this.setupMessageActions(), 1500);
+    console.log('[TI Support] Observers configurados');
   }
 
   setupMessageActions() {
+    // Limpa observer anterior se existir
     if (this.messageObserver) {
       this.messageObserver.disconnect();
       this.messageObserver = null;
     }
 
-    // Tenta múltiplos seletores para área de mensagens
-    const messagesArea = document.querySelector('#main') ||
-                         document.querySelector('[role="main"]') ||
-                         document.querySelector('[data-testid="conversation-panel-messages"]') ||
-                         document.querySelector('[data-testid="conversation-panel-body"]') ||
-                         document.querySelector('div[role="application"]');
+    const messagesArea = document.querySelector('[data-testid="conversation-panel-messages"]') ||
+                         document.querySelector('#main [role="application"]') ||
+                         document.querySelector('#main');
 
     if (!messagesArea) {
-      
-      setTimeout(() => this.setupMessageActions(), 2000);
+      console.log('[TI Support] Área de mensagens não encontrada, tentando novamente...');
+      setTimeout(() => this.setupMessageActions(), 3000);
       return;
     }
 
-    
+    console.log('[TI Support] Configurando ações nas mensagens...');
 
-    const attachButtons = () => {
-      // Tenta seletores mais genéricos para mensagens
-      let messageNodes = [];
+    // Função para anexar botões às mensagens (com limite para performance)
+    const attachButtonsToMessages = () => {
+      // Tenta múltiplos seletores para encontrar mensagens
+      let messages = messagesArea.querySelectorAll('[data-testid="msg-container"]:not([data-ti-action])');
       
-      // Busca por divs com classes que contenham 'message'
-      const allDivs = messagesArea.querySelectorAll('div[class*="message"]');
-      allDivs.forEach(div => {
-        // Verifica se é uma mensagem real (tem texto ou mídia)
-        const hasText = div.querySelector('span[dir="ltr"], span[dir="rtl"], span[dir="auto"]');
-        const hasMedia = div.querySelector('img, video, audio');
-        
-        if ((hasText || hasMedia) && !div.getAttribute('data-ti-action')) {
-          messageNodes.push(div);
-        }
+      // Se não encontrou, tenta outros seletores
+      if (messages.length === 0) {
+        messages = messagesArea.querySelectorAll('div[class*="message-"]:not([data-ti-action])');
+      }
+      if (messages.length === 0) {
+        messages = messagesArea.querySelectorAll('div[data-id]:not([data-ti-action])');
+      }
+      if (messages.length === 0) {
+        // Busca por estrutura típica de mensagem do WhatsApp
+        messages = messagesArea.querySelectorAll('div.copyable-text:not([data-ti-action])');
+      }
+      
+      console.log(`[TI Support] Encontradas ${messages.length} mensagens para processar`);
+      
+      // Limita a 20 mensagens por vez para não travar
+      const messagesToProcess = Array.from(messages).slice(-20);
+      
+      messagesToProcess.forEach(msg => {
+        this.attachMessageAction(msg);
       });
-      
-      
-      messageNodes.forEach(node => this.attachMessageAction(node));
     };
 
-    attachButtons();
+    // Executa uma vez
+    setTimeout(attachButtonsToMessages, 500);
 
+    // Observer LEVE com debounce longo - observa subtree para pegar novas mensagens
+    let debounceTimer = null;
     this.messageObserver = new MutationObserver(() => {
-      attachButtons();
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(attachButtonsToMessages, 1500);
     });
 
     this.messageObserver.observe(messagesArea, {
@@ -581,30 +529,41 @@ class WhatsAppSupportExtension {
       subtree: true
     });
 
-    
+    // Configura observer do menu de contexto
     this.setupContextMenuObserver();
+    
+    console.log('[TI Support] Ações nas mensagens configuradas');
   }
 
   setupContextMenuObserver() {
     if (this.contextMenuObserver) {
-      return;
+      return; // Já configurado
     }
+
+    // Observer apenas no #app para detectar menus (muito mais leve que document.body)
+    const appElement = document.querySelector('#app');
+    if (!appElement) return;
 
     this.contextMenuObserver = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
-        mutation.addedNodes.forEach(node => {
-          if (!(node instanceof HTMLElement)) return;
-
-          const menus = node.matches('[role="menu"]') ? [node] : Array.from(node.querySelectorAll('[role="menu"]'));
-          menus.forEach(menu => this.injectContextMenuItem(menu));
-        });
+        for (const node of mutation.addedNodes) {
+          if (!(node instanceof HTMLElement)) continue;
+          
+          // Busca menus de contexto
+          const menu = node.querySelector('[role="menu"]') || (node.matches('[role="menu"]') ? node : null);
+          if (menu) {
+            setTimeout(() => this.injectContextMenuItem(menu), 50);
+          }
+        }
       }
     });
 
-    this.contextMenuObserver.observe(document.body, {
+    this.contextMenuObserver.observe(appElement, {
       childList: true,
       subtree: true
     });
+    
+    console.log('[TI Support] Observer do menu de contexto configurado');
   }
 
   injectContextMenuItem(menuElement) {
@@ -660,21 +619,25 @@ class WhatsAppSupportExtension {
       return;
     }
 
+    // Marca como processado primeiro para evitar duplicatas
+    messageElement.setAttribute('data-ti-action', 'true');
+
+    // Tenta extrair texto - se não tiver, pode ser imagem/mídia
     const messageText = this.extractMessageTextFromBubble(messageElement);
-    if (!messageText) {
+    
+    // Verifica se tem conteúdo (texto ou mídia)
+    const hasMedia = messageElement.querySelector('img, video, audio, [data-testid="image-thumb"]');
+    if (!messageText && !hasMedia) {
       return;
     }
 
-    messageElement.setAttribute('data-ti-action', 'true');
-
     // Detecta clique na setinha (menu dropdown) da mensagem para injetar no menu
     const detectMenuClick = () => {
-      const menuButton = messageElement.querySelector('[data-testid="msg-menu"], [data-icon="down-context"], button[aria-label*="Menu"], span[data-icon="down"]');
+      const menuButton = messageElement.querySelector('[data-testid="msg-menu"], [data-icon="down-context"], button[aria-label*="Menu"], span[data-icon="down"], [data-icon="tail-in"], [data-icon="tail-out"]');
       if (menuButton && !menuButton.getAttribute('data-ti-listener')) {
         menuButton.setAttribute('data-ti-listener', 'true');
         menuButton.addEventListener('click', () => {
           this.lastContextMenuMessage = messageElement;
-          
         }, { capture: true });
       }
     };
@@ -682,30 +645,73 @@ class WhatsAppSupportExtension {
     // Tenta detectar imediatamente
     detectMenuClick();
 
-    // Cria botão customizado simples que sempre aparece
+    // Cria botão customizado simples
     const ticketBtn = document.createElement('button');
     ticketBtn.type = 'button';
     ticketBtn.className = 'ti-simple-ticket-btn';
     ticketBtn.title = 'Criar chamado de suporte';
     ticketBtn.innerHTML = '🎫';
+    ticketBtn.style.cssText = `
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #00a884;
+      color: white;
+      border: 2px solid white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.15s, transform 0.15s;
+      pointer-events: none;
+      transform: scale(0.8);
+    `;
 
     ticketBtn.addEventListener('click', (event) => {
       event.stopPropagation();
       event.preventDefault();
-      
       this.handleMessageTicket(messageElement);
     });
 
-    // Adiciona o botão diretamente no container da mensagem
+    // Configura o elemento para posicionamento relativo
     messageElement.style.position = 'relative';
+    messageElement.style.overflow = 'visible';
     messageElement.appendChild(ticketBtn);
 
-    // Ao fazer hover, tenta detectar novamente a setinha
-    messageElement.addEventListener('mouseenter', () => {
+    // Função para mostrar botão
+    const showButton = () => {
+      ticketBtn.style.opacity = '1';
+      ticketBtn.style.pointerEvents = 'auto';
+      ticketBtn.style.transform = 'scale(1)';
       detectMenuClick();
-    }, { once: false });
-
+    };
     
+    // Função para esconder botão
+    const hideButton = () => {
+      ticketBtn.style.opacity = '0';
+      ticketBtn.style.pointerEvents = 'none';
+      ticketBtn.style.transform = 'scale(0.8)';
+    };
+
+    // Mostra/esconde no hover do elemento inteiro
+    messageElement.addEventListener('mouseenter', showButton);
+    messageElement.addEventListener('mouseleave', hideButton);
+    
+    // Mantém visível enquanto hover no próprio botão
+    ticketBtn.addEventListener('mouseenter', showButton);
+    ticketBtn.addEventListener('mouseleave', (e) => {
+      // Só esconde se o mouse não foi para o messageElement
+      if (!messageElement.contains(e.relatedTarget)) {
+        hideButton();
+      }
+    });
   }
 
   injectTicketButtonInMessageActions(messageElement) {
@@ -1242,52 +1248,8 @@ Comentário original: """${sanitizedComment}"""`;
   }
 
   addToolbarButton() {
-    
-    
-    // Remove botão existente se houver
-    document.getElementById('ti-toolbar-btn')?.remove();
-
-    // Usa o header salvo (da conversa, não da lista)
-    const chatHeader = this.getChatHeader();
-
-    if (!chatHeader) {
-      console.error('� Header da conversa não encontrado');
-      return;
-    }
-
-    
-
-    // Tenta múltiplos seletores para encontrar o container de botões
-    const headerButtons = chatHeader.querySelector('div[role="button"]')?.parentElement ||
-                         chatHeader.querySelector('[aria-label]')?.parentElement ||
-                         chatHeader.querySelector('button')?.parentElement ||
-                         chatHeader.lastElementChild;
-
-    if (headerButtons) {
-      
-      
-      const button = document.createElement('div');
-      button.id = 'ti-toolbar-btn';
-      button.className = 'ti-toolbar-button';
-      button.title = 'Abrir painel de chamados';
-      button.innerHTML = `
-        <button class="ti-btn-icon" style="background: #00a884; color: white; border: none; padding: 8px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">
-          <svg viewBox="0 0 24 24" width="24" height="24">
-            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-          </svg>
-        </button>
-      `;
-      button.addEventListener('click', () => {
-        
-        this.togglePanel();
-      });
-      
-      headerButtons.appendChild(button);
-      
-    } else {
-      console.error('� Container de botões não encontrado no header');
-      
-    }
+    // Botão removido - painel sempre visível
+    return;
   }
 
   ensureToolbarButton() {
@@ -1303,70 +1265,14 @@ Comentário original: """${sanitizedComment}"""`;
   }
 
   togglePanel(show = null) {
+    // Painel sempre visível - este método agora apenas garante visibilidade
     const panel = document.getElementById('ti-support-panel');
     if (!panel) return;
 
-    this.panelVisible = show !== null ? show : !this.panelVisible;
-    
-    if (this.panelVisible) {
-      
-      
-      panel.classList.remove('hidden');
-      document.body.classList.remove('ti-panel-hidden');
-      
-      // Força recalculo do layout após pequeno delay
-      setTimeout(() => {
-        window.dispatchEvent(new Event('resize'));
-      }, 50);
-      
-      // Limpa APENAS os tickets (mantém contato e telefone)
-      
-      this.tickets = [];
-      
-      const shouldLoadTickets = !this.suppressNextTicketLoad;
-      this.suppressNextTicketLoad = false;
-
-      // Aguarda painel abrir, então verifica se tem contato e carrega tickets
-      setTimeout(() => {
-        
-        
-        // Se não tem contato detectado, força detecção
-        if (!this.currentPhone) {
-          
-          this.detectContactChange();
-        } else {
-          
-          this.updateContactInfo();
-        }
-        
-        // Carrega tickets se houver telefone
-        if (this.currentPhone && shouldLoadTickets) {
-          
-          this.loadTickets();
-        } else if (this.currentPhone && !shouldLoadTickets) {
-          
-        } else {
-          
-        }
-      }, 100);
-      
-    } else {
-      
-      
-      panel.classList.add('hidden');
-      document.body.classList.add('ti-panel-hidden');
-      
-      // Força recalculo do layout
-      setTimeout(() => {
-        window.dispatchEvent(new Event('resize'));
-      }, 50);
-      
-      // Garante que o botão permanece visível
-      setTimeout(() => {
-        
-        this.ensureToolbarButton();
-      }, 150);
-    }
+    // Garantir que o painel sempre esteja visível
+    this.panelVisible = true;
+    panel.classList.remove('hidden');
+    document.body.classList.remove('ti-panel-hidden');
   }
 
   async detectContactChange() {

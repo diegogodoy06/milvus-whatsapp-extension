@@ -240,20 +240,21 @@ body[data-theme="dark"],
 .ti-support-panel {
   width: 400px;
   height: 100vh;
-  background: var(--ti-bg-primary);
-  border-left: 1px solid var(--ti-border-color);
-  display: flex;
+  background: var(--ti-bg-primary, #ffffff);
+  border-left: 1px solid var(--ti-border-color, #e9edef);
+  display: flex !important;
   flex-direction: column;
   position: fixed;
   right: 0;
   top: 0;
-  z-index: 100;
-  box-shadow: none;
+  z-index: 9999;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
   transition: none;
 }
 
+/* Painel sempre visível - classe hidden não esconde mais */
 .ti-support-panel.hidden {
-  display: none;
+  display: flex !important;
 }
 
 /* Header do Painel - ESTILO WHATSAPP NATIVO */
@@ -1281,49 +1282,9 @@ body[data-theme="dark"] .ti-panel-content::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Botão Flutuante - Toggle do Painel */
+/* Botão Flutuante - Removido (painel sempre visível) */
 .ti-floating-toggle {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: #00a884;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 168, 132, 0.4), 0 2px 4px rgba(0, 0, 0, 0.12);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 10000;
-  color: white;
-}
-
-/* Botão no modo escuro */
-body[data-theme="dark"] .ti-floating-toggle {
-  background: #144D37;
-  box-shadow: 0 4px 12px rgba(20, 77, 55, 0.5), 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.ti-floating-toggle:hover {
-  transform: scale(1.1) rotate(5deg);
-  box-shadow: 0 6px 20px rgba(0, 168, 132, 0.5), 0 3px 6px rgba(0, 0, 0, 0.15);
-}
-
-body[data-theme="dark"] .ti-floating-toggle:hover {
-  background: #1a6144;
-  box-shadow: 0 6px 20px rgba(20, 77, 55, 0.6), 0 3px 6px rgba(0, 0, 0, 0.25);
-}
-
-.ti-floating-toggle:active {
-  transform: scale(0.95);
-}
-
-/* Oculta o botão quando o painel está aberto */
-body:not(.ti-panel-hidden) .ti-floating-toggle {
-  right: 424px;
+  display: none !important;
 }
 
 /* Responsividade e ajuste de layout do WhatsApp */
@@ -1333,21 +1294,16 @@ body:not(.ti-panel-hidden) .ti-floating-toggle {
   }
 }
 
-/* Garante que o WhatsApp não seja sobreposto pelo painel */
-body:not(.ti-panel-hidden) #app {
+/* Garante que o WhatsApp não seja sobreposto pelo painel - SEMPRE */
+#app {
   width: calc(100% - 400px) !important;
   max-width: calc(100vw - 400px) !important;
   transition: width 0.3s ease, max-width 0.3s ease !important;
 }
 
-body:not(.ti-panel-hidden) #app > div,
-body:not(.ti-panel-hidden) #app > div > div {
+#app > div,
+#app > div > div {
   max-width: 100% !important;
-}
-
-body.ti-panel-hidden #app {
-  width: 100% !important;
-  max-width: 100vw !important;
 }
 
 @media (max-width: 900px) {
