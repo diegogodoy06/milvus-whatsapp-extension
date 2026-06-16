@@ -6,63 +6,99 @@ let API_BASE_URL = 'https://apiintegracao.milvus.com.br/api'; // URL da API Milv
 let API_TOKEN = ''; // Token de autenticação
 let GEMINI_API_KEY = '';
 
-// Mapeamento de Categorias do Milvus (Categoria Primária | Categoria Secundária : ID)
+// Mapeamento de Categorias do Milvus — agora com 3 níveis.
+// Chave = caminho completo "Primária | Secundária | Terciária" (separado por " | ").
+// Valor = ID da categoria folha no Milvus.
+// O número de segmentos define a profundidade (1, 2 ou 3 níveis).
 const MILVUS_CATEGORIES = {
-  'Acessos': '157982',
-  'Acessos | Liberação Portões Estoque': '631701',
-  'Acessos | Recuperação de senha': '631422',
-  'Acessos | Liberação de Sites / Firewall': '631421',
-  'Acessos | Liberação de acesso Outros': '631419',
-  'Acessos | Liberação de acesso Alarme': '631417',
-  'Acessos | Remoção de Acessos': '563653',
-  'Acessos | Liberação de funções ERP': '563543',
-  'Acessos | Liberação de acesso Pastas (NAS)': '562350',
-  'Acessos | Novo colaborador / Cadastro de funcionário': '562349',
-  'Backup': '157479',
-  'Backup | Execução': '631424',
-  'Backup | Restore Execução': '561052',
-  'Backup | Corrompido': '559948',
-  'Backup | Não rodou': '559947',
-  'Gerencial': '157749',
-  'Gerencial | Prestação de contas': '631425',
-  'Gerencial | Relatórios gerenciais / Saída': '561068',
-  'Gerencial | Procedimento Operacional': '561063',
-  'Gerencial | Torno CNC / Prorrogar expiração mensal': '561061',
-  'Hardware': '157480',
-  'Hardware | Outros tipos de aprovações': '631595',
-  'Hardware | Configuração inicial': '631426',
-  'Hardware | Mudança física': '621634',
-  'Hardware | Passagem de cabos': '580941',
-  'Hardware | Computador Não liga': '561075',
-  'Hardware | Mouse / Teclado / Monitor / Outros': '561074',
-  'Hardware | Limpeza': '559950',
-  'Hardware | Troca de peça': '559949',
-  'Impressoras': '159289',
-  'Impressoras | Outros Problemas de impressão': '631427',
-  'Impressoras | Suprimentos / Troca de Tonner': '567350',
-  'Impressoras | Manutenção': '567349',
-  'Impressoras | Instalação': '567348',
-  'Servidor': '157482',
-  'Servidor | Servidor NAS': '561090',
-  'Servidor | Servidor Windows': '561086',
-  'Servidor | Outros servidores / Virtualização': '559955',
-  'Software': '157481',
-  'Software | Instalação / Configuração / Remoção': '631443',
-  'Software | Formatação': '563670',
-  'Software | SolidWorks': '561114',
-  'Software | Adobe / Corel': '561111',
-  'Software | Sistema Operacional Problemas': '561107',
-  'Software | Contratar software / licença': '561103',
-  'Software | ERP Ajuste / Parametrização': '559953',
-  'Software | ERP Erro no sistema': '559951',
-  'Telefonia': '157751',
-  'Telefonia | Relatórios': '633559',
-  'Telefonia | Problema com Aparelho': '631428',
-  'Telefonia | Ramal Problema': '561126',
-  'Telefonia | Ramal Configurar / Instalar': '561125',
-  'Telefonia | Problema linha móvel / chip': '561123',
-  'Telefonia | Contratar Ramal / Linha / Linha Móvel': '561122'
+  // ===== Marketing =====
+  'Marketing': '182267',
+  'Marketing | Artes Gráficas': '681221',
+
+  // ===== Tecnologia da Informação =====
+  'Tecnologia da Informação': '182275',
+
+  // Acessos
+  'Tecnologia da Informação | Acessos': '681485',
+  'Tecnologia da Informação | Criação de usuário | Novo colaborador / Cadastro de funcionário': '681486',
+  'Tecnologia da Informação | Liberação | Liberação Portões Estoque': '681487',
+  'Tecnologia da Informação | Liberações | Liberação de acesso Alarme': '681488',
+  'Tecnologia da Informação | Liberações | Liberação de acesso Outros': '681489',
+  'Tecnologia da Informação | Liberações | Liberação de acesso Pastas (NAS)': '681490',
+  'Tecnologia da Informação | Liberações | Liberação de funções ERP': '681491',
+  'Tecnologia da Informação | Liberações | Liberação de Sites / Firewall': '681492',
+  'Tecnologia da Informação | Recuperação de senha': '681493',
+  'Tecnologia da Informação | Remoção de Acessos': '681494',
+
+  // Backup
+  'Tecnologia da Informação | Backup': '681495',
+  'Tecnologia da Informação | Backup | Corrompido': '681500',
+  'Tecnologia da Informação | Backup | Execução': '681499',
+  'Tecnologia da Informação | Backup | Não rodou': '681498',
+  'Tecnologia da Informação | Corrompido': '681497',
+  'Tecnologia da Informação | Restore | Execução': '681496',
+
+  // Gerencial
+  'Tecnologia da Informação | Gerencial': '681535',
+  'Tecnologia da Informação | Procedimentos | Procedimento Operacional': '681536',
+  'Tecnologia da Informação | Relatórios | Prestação de contas': '681537',
+  'Tecnologia da Informação | Relatórios | Relatórios gerenciais / Saída': '681538',
+  'Tecnologia da Informação | Torno CNC / Produção | Torno CNC / Prorrogar expiração mensal': '681553',
+
+  // Hardware
+  'Tecnologia da Informação | Hardware': '681527',
+  'Tecnologia da Informação | Computador | Configuração inicial': '681534',
+  'Tecnologia da Informação | Computador | Limpeza': '681533',
+  'Tecnologia da Informação | Computador | Não liga': '681532',
+  'Tecnologia da Informação | Computador | Troca de peça': '681531',
+  'Tecnologia da Informação | Infraestrutura | Mudança física': '681530',
+  'Tecnologia da Informação | Infraestrutura | Passagem de cabos': '681529',
+  'Tecnologia da Informação | Periféricos | Mouse / Teclado / Monitor / Outros': '681528',
+
+  // Impressoras
+  'Tecnologia da Informação | Impressoras': '681522',
+  'Tecnologia da Informação | Impressoras | Instalação': '681523',
+  'Tecnologia da Informação | Impressoras | Manutenção': '681524',
+  'Tecnologia da Informação | Impressoras | Outros Problemas de impressão': '681525',
+  'Tecnologia da Informação | Impressoras | Suprimentos / Troca de Tonner': '681526',
+
+  // Servidor
+  'Tecnologia da Informação | Servidor': '681518',
+  'Tecnologia da Informação | Servidor | Outros servidores / Virtualização': '681519',
+  'Tecnologia da Informação | Servidor | Servidor NAS': '681520',
+  'Tecnologia da Informação | Servidor | Servidor Windows': '681521',
+
+  // Software
+  'Tecnologia da Informação | Software': '681507',
+  'Tecnologia da Informação | ERP (Sistema) | Ajuste / Parametrização': '681517',
+  'Tecnologia da Informação | ERP (Sistema) | Cadastro de funcionário': '681516',
+  'Tecnologia da Informação | ERP (Sistema) | Erro no sistema': '681515',
+  'Tecnologia da Informação | Licenças | Contratar software / licença': '681514',
+  'Tecnologia da Informação | Outros Softwares | Instalação / Configuração / Remoção': '681511',
+  'Tecnologia da Informação | Sistema Operacional': '681509',
+  'Tecnologia da Informação | SKA | Ajuste / Parametrização / ERRO': '681508',
+
+  // Telefonia
+  'Tecnologia da Informação | Telefonia': '681501',
+  'Tecnologia da Informação | Contratar Ramal / Linha / Linha Móvel / outros': '681506',
+  'Tecnologia da Informação | Ramal / Linha fixa | Configurar / Instalar': '681505',
+  'Tecnologia da Informação | Ramal / Linha fixa | Problema': '681504',
+  'Tecnologia da Informação | Telefonia móvel | Problema com Aparelho': '681503',
+  'Tecnologia da Informação | Telefonia móvel | Problema linha móvel / chip': '681502'
 };
+
+// Quebra um caminho de categoria "A | B | C" em até 3 níveis.
+function splitCategoryPath(categoryPath) {
+  if (!categoryPath || typeof categoryPath !== 'string') {
+    return { primary: null, secondary: null, tertiary: null };
+  }
+  const parts = categoryPath.split(' | ').map(part => part.trim()).filter(Boolean);
+  return {
+    primary: parts[0] || null,
+    secondary: parts[1] || null,
+    tertiary: parts[2] || null
+  };
+}
 
 // Carrega configurações salvas
 chrome.storage.sync.get(['apiBaseUrl', 'apiToken', 'geminiApiKey'], (result) => {
@@ -384,8 +420,12 @@ class WhatsAppSupportExtension {
   }
 
   getChatHeader() {
-    return this.chatHeader ||
-      (document.querySelector('[role="main"]') || document.querySelector('#main'))?.querySelector('header');
+    // Só reaproveita o header em cache se ainda estiver no DOM (evita usar um
+    // header "fantasma" de uma conversa anterior já removida).
+    if (this.chatHeader && this.chatHeader.isConnected) {
+      return this.chatHeader;
+    }
+    return (document.querySelector('#main') || document.querySelector('[role="main"]'))?.querySelector('header') || null;
   }
 
   observeHeader(header) {
@@ -464,8 +504,33 @@ class WhatsAppSupportExtension {
 
     // Configura ações nas mensagens com delay maior
     setTimeout(() => this.setupMessageActions(), 3000);
-    
+
+    // Monitor principal: o WhatsApp removeu o header/data-testid do DOM, então
+    // os observers acima ficaram pouco confiáveis. Aqui lemos o chat ativo do
+    // Store interno a cada 1,5s e disparamos a detecção quando o chat muda.
+    this.startStorePolling();
+
     console.log('[TI Support] Observers configurados');
+  }
+
+  startStorePolling() {
+    if (this.storePollTimer) return;
+    this.lastStoreJid = undefined;
+
+    this.storePollTimer = setInterval(async () => {
+      if (this.storeUnavailable) return;
+
+      const store = await this.getActiveChatFromStore();
+      const jid = store && store.jid ? store.jid : null;
+
+      if (jid !== this.lastStoreJid) {
+        this.lastStoreJid = jid;
+        if (jid) {
+          console.log('[TI Support] Chat ativo (Store):', store.name, store.phone);
+        }
+        this.detectContactChange();
+      }
+    }, 1500);
   }
 
   setupMessageActions() {
@@ -984,6 +1049,7 @@ class WhatsAppSupportExtension {
         categoryId: suggestion.categoryId,
         primaryCategory: suggestion.primaryCategory,
         secondaryCategory: suggestion.secondaryCategory,
+        tertiaryCategory: suggestion.tertiaryCategory,
         source: suggestion.source || 'gemini',
         hasImage: !!imageData
       });
@@ -1035,11 +1101,16 @@ CATEGORIAS DISPON�VEIS:
 
     prompt += `
 
+IMPORTANTE sobre as categorias: a lista usa o formato "Primária | Secundária | Terciária"
+(separado por " | "). Escolha a opção que melhor descreve o problema e copie o caminho
+exatamente como aparece. A classificação usa APENAS os dois primeiros níveis
+(Primária e Secundária) — o terceiro nível é ignorado, então não se preocupe com ele.
+
 Responda APENAS em JSON com o formato:
 {
   "title": "...",
   "description": "...",
-  "category": "categoria exata da lista"
+  "category": "caminho exato da lista (ex: Tecnologia da Informação | Impressoras)"
 }
 
 Use um tom profissional e claro em português.`;
@@ -1134,24 +1205,22 @@ Use um tom profissional e claro em português.`;
     try {
       const parsed = JSON.parse(cleaned);
       
-      // Extrai categoria primária e secundária
+      // Extrai categorias (até 3 níveis: primária | secundária | terciária)
       let categoryId = null;
       let primaryCategory = null;
       let secondaryCategory = null;
-      
+      let tertiaryCategory = null;
+
       if (parsed.category && MILVUS_CATEGORIES[parsed.category]) {
         categoryId = MILVUS_CATEGORIES[parsed.category];
-        
-        // Separa categoria primária | secundária
-        if (parsed.category.includes(' | ')) {
-          const parts = parsed.category.split(' | ');
-          primaryCategory = parts[0].trim();
-          secondaryCategory = parts[1].trim();
-        } else {
-          primaryCategory = parsed.category;
-        }
+
+        const levels = splitCategoryPath(parsed.category);
+        primaryCategory = levels.primary;
+        secondaryCategory = levels.secondary;
+        // Categorizamos apenas até o 2º nível; a terciária fica em branco propositalmente.
+        tertiaryCategory = null;
       }
-      
+
       return {
         title: typeof parsed.title === 'string' ? parsed.title.trim() : '',
         description: typeof parsed.description === 'string' ? parsed.description.trim() : (sanitizedMessage || '[Imagem anexada - descrição não gerada]'),
@@ -1159,6 +1228,7 @@ Use um tom profissional e claro em português.`;
         categoryId: categoryId,
         primaryCategory: primaryCategory,
         secondaryCategory: secondaryCategory,
+        tertiaryCategory: tertiaryCategory,
         source: 'gemini'
       };
     } catch (error) {
@@ -1275,19 +1345,59 @@ Comentário original: """${sanitizedComment}"""`;
     document.body.classList.remove('ti-panel-hidden');
   }
 
+  // Pede ao injected.js (rodando no contexto da página) os dados do chat ativo
+  // lidos do Store interno do WhatsApp (nome + telefone real, mesmo com @lid).
+  async getActiveChatFromStore() {
+    if (this.storeUnavailable) return null;
+
+    const result = await new Promise((resolve) => {
+      const reqId = 'ti_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+      let done = false;
+      const handler = (event) => {
+        if (event.source !== window) return;
+        const d = event.data;
+        if (!d || d.__tiSupport !== 'response' || d.reqId !== reqId) return;
+        done = true;
+        window.removeEventListener('message', handler);
+        resolve({ ok: true, data: d.result || null });
+      };
+      window.addEventListener('message', handler);
+      window.postMessage({ __tiSupport: 'request', reqId }, '*');
+      setTimeout(() => {
+        if (!done) { window.removeEventListener('message', handler); resolve({ ok: false }); }
+      }, 1000);
+    });
+
+    if (!result.ok) {
+      // injected.js não respondeu (não carregou / world MAIN indisponível)
+      this.storeNoResponse = (this.storeNoResponse || 0) + 1;
+      if (this.storeNoResponse >= 3) {
+        this.storeUnavailable = true;
+        console.warn('[TI Support] Store interno indisponível; usando fallback do DOM.');
+      }
+      return null;
+    }
+
+    this.storeNoResponse = 0;
+    return result.data; // null (sem chat ativo) ou { name, phone, jid, isGroup }
+  }
+
   async detectContactChange() {
-    
-    
-    
+
+
+
+    // Fonte primária: estado interno do WhatsApp via injected.js (Store).
+    // O WhatsApp removeu o telefone do DOM, então lemos nome+telefone do Store.
+    const store = await this.getActiveChatFromStore();
+    const storeName = store && store.name ? store.name : '';
+    const hasActiveStoreChat = !!(store && (store.phone || store.name));
+
     const headerElement = this.getChatHeader();
-    const conversationPanel = document.querySelector('[data-testid="conversation-panel-messages"]') ||
-                              document.querySelector('[data-testid="conversation-panel"]') ||
-                              document.querySelector('[data-testid="conversation-panel-body"]');
-    
-    // Extrai número de telefone PRIMEIRO (mais confiável que header)
-    const phone = this.extractPhoneNumber();
-    
-    const hasConversation = !!phone || !!headerElement || !!conversationPanel;
+
+    // Telefone: primeiro do Store interno; se faltar, tenta o DOM (legado).
+    const phone = (store && store.phone) ? store.phone : this.extractPhoneNumber();
+
+    const hasConversation = hasActiveStoreChat || !!phone || !!headerElement;
     
     
     if (!hasConversation) {
@@ -1311,15 +1421,18 @@ Comentário original: """${sanitizedComment}"""`;
       return;
     }
 
+    let shouldRetryPhone = false;
     if (!phone) {
       this.pendingPhoneRetryCount += 1;
 
       if (this.pendingPhoneRetryCount <= 6) {
-        this.scheduleContactDetection(350 + this.pendingPhoneRetryCount * 100, `tentativa ${this.pendingPhoneRetryCount} sem telefone`);
-        return;
+        // Não retorna mais aqui: segue e mostra o NOME do contato enquanto
+        // tenta o telefone em segundo plano. Antes o card ficava oculto até o
+        // telefone aparecer (ou sumia de vez se ele nunca era encontrado).
+        shouldRetryPhone = true;
+      } else {
+        console.warn('[TI Support] Não foi possível detectar o telefone após múltiplas tentativas');
       }
-
-      console.warn('⚠� Não foi possível detectar o telefone após múltiplas tentativas');
     } else {
       this.pendingPhoneRetryCount = 0;
     }
@@ -1483,6 +1596,12 @@ Comentário original: """${sanitizedComment}"""`;
       shouldRetryName = false;
     }
 
+    // O nome do Store interno é o mais confiável: sobrescreve o do DOM.
+    if (storeName) {
+      contactName = storeName;
+      shouldRetryName = false;
+    }
+
     
     
     
@@ -1535,6 +1654,11 @@ Comentário original: """${sanitizedComment}"""`;
       this.pendingNameRetryCount = 0;
     }
 
+    // Continua tentando o telefone em segundo plano (sem bloquear a exibição do nome)
+    if (shouldRetryPhone) {
+      this.scheduleContactDetection(350 + this.pendingPhoneRetryCount * 100, `retentativa telefone (${this.pendingPhoneRetryCount})`);
+    }
+
     // Configura ações em mensagens ao confirmar conversa ativa
     this.setupMessageActions();
 
@@ -1543,73 +1667,59 @@ Comentário original: """${sanitizedComment}"""`;
   }
 
   extractPhoneNumber() {
-    
-    
-    // Método 1: Extrair da URL (MAIS CONFI�VEL)
-    const urlMatch = window.location.href.match(/\/(\d+)@/);
+    // Método 1: Extrair da URL (quando aberto via wa.me / send?phone=)
+    const urlMatch = window.location.href.match(/(?:phone=|\/)(\d{10,15})(?:@|&|$)/);
     if (urlMatch) {
-      const phone = urlMatch[1];
-      
-      return phone;
+      return urlMatch[1];
     }
-    
-    // Método 2: Buscar em elementos com data-id DENTRO da área principal
-    const mainArea = document.querySelector('[role="main"]') || document.querySelector('#main');
-    const elementsWithDataId = mainArea ? mainArea.querySelectorAll('[data-id]') : [];
-    for (let element of elementsWithDataId) {
-      const dataId = element.getAttribute('data-id');
-      if (dataId && dataId.includes('@')) {
-        const match = dataId.match(/(\d+)@/);
-        if (match && match[1].length >= 10) {
-          
-          return match[1];
+
+    const mainArea = document.querySelector('#main') || document.querySelector('[role="main"]');
+
+    // Método 2: data-id das mensagens (ex.: "false_5511999999999@c.us_3EB0...").
+    // É a fonte mais confiável no WhatsApp atual, que removeu os data-testid.
+    // Procura o número antes de "@c.us" / "@s.whatsapp.net" (ignora @g.us/@lid).
+    const phoneFromDataId = (root) => {
+      if (!root) return null;
+      const els = root.querySelectorAll('[data-id*="@c.us"], [data-id*="@s.whatsapp.net"]');
+      for (const el of els) {
+        const dataId = el.getAttribute('data-id') || '';
+        const matches = [...dataId.matchAll(/(\d{10,15})@(?:c\.us|s\.whatsapp\.net)/g)];
+        if (matches.length) {
+          // Em grupos, o último é o participante; em 1:1 só há um.
+          return matches[matches.length - 1][1];
         }
       }
+      return null;
+    };
+
+    const phoneFromMessages = phoneFromDataId(mainArea);
+    if (phoneFromMessages) {
+      return phoneFromMessages;
     }
-    
-    // Método 3: Buscar no header da conversa
-    const header = document.querySelector('[role="main"] header') || 
+
+    // Método 3: data-id no próprio header da conversa
+    const header = document.querySelector('#main header') ||
+                   document.querySelector('[role="main"] header') ||
                    document.querySelector('header[data-testid="conversation-header"]');
-    
     if (header) {
-      const dataId = header.getAttribute('data-id');
-      if (dataId) {
-        const match = dataId.match(/(\d+)@/);
-        if (match) {
-          
-          return match[1];
-        }
+      const dataId = header.getAttribute('data-id') || '';
+      const match = dataId.match(/(\d{10,15})@/);
+      if (match) {
+        return match[1];
       }
     }
-    
-    // Método 4: Buscar na área de mensagens
-    const messagesArea = document.querySelector('[data-testid="conversation-panel-messages"]');
-    if (messagesArea) {
-      const parent = messagesArea.closest('[data-id]');
-      if (parent) {
-        const dataId = parent.getAttribute('data-id');
-        const match = dataId?.match(/(\d+)@/);
-        if (match) {
-          
-          return match[1];
-        }
-      }
-    }
-    
-    // Método 5: Última tentativa - buscar em span com título
-    const titleSpan = document.querySelector('[role="main"] span[title]');
+
+    // Método 4: Última tentativa - span com título contendo número
+    const titleSpan = document.querySelector('#main span[title]') ||
+                      document.querySelector('[role="main"] span[title]');
     if (titleSpan) {
-      const title = titleSpan.getAttribute('title');
-      const phoneMatch = title?.match(/\d{10,15}/);
+      const phoneMatch = (titleSpan.getAttribute('title') || '').match(/\d{10,15}/);
       if (phoneMatch) {
-        
         return phoneMatch[0];
       }
     }
-    
-    console.warn('⚠� Não foi possível extrair o telefone');
-    
-    
+
+    console.warn('[TI Support] Não foi possível extrair o telefone');
     return null;
   }
 
@@ -1619,38 +1729,36 @@ Comentário original: """${sanitizedComment}"""`;
     
     const infoDiv = document.getElementById('ti-contact-info');
     if (!infoDiv) {
-      console.error('� Elemento ti-contact-info não encontrado!');
+      console.error('[TI Support] Elemento ti-contact-info não encontrado!');
       return;
     }
 
-    if (this.currentContact && this.currentPhone) {
+    const nameEl = infoDiv.querySelector('.ti-contact-name');
+    const phoneEl = infoDiv.querySelector('.ti-contact-phone');
+
+    // Mostra o contato assim que tivermos NOME OU TELEFONE (não exige os dois).
+    // Antes exigia ambos, então qualquer falha na extração do telefone fazia o
+    // card sumir e exibir "Nenhuma conversa selecionada".
+    if (this.currentContact || this.currentPhone) {
       infoDiv.classList.remove('hidden');
-      
-      // Garante que mostra o NOME no campo de contato (não o número)
+
       const contactName = this.currentContact;
-      
-      
-      
-      // Se o nome for do tipo "Contato (número)", exibe mensagem apropriada
-      if (contactName.startsWith('Contato (')) {
-        infoDiv.querySelector('.ti-contact-name').textContent = 'Sem nome salvo';
-        
+      if (!contactName || contactName.startsWith('Contato (') || contactName === 'Contato sem nome') {
+        // Nome ainda não detectado: mostra o que for possível
+        nameEl.textContent = this.currentPhone ? 'Sem nome salvo' : 'Contato selecionado';
       } else {
-        infoDiv.querySelector('.ti-contact-name').textContent = contactName;
-        
+        nameEl.textContent = contactName;
       }
-      
-      infoDiv.querySelector('.ti-contact-phone').textContent = `Tel: ${this.currentPhone}`;
-      
+
+      phoneEl.textContent = this.currentPhone
+        ? `Tel: ${this.currentPhone}`
+        : 'Buscando número...';
     } else {
       // Nenhum contato selecionado
       infoDiv.classList.remove('hidden');
-      infoDiv.querySelector('.ti-contact-name').textContent = '📭 Nenhuma conversa selecionada';
-      infoDiv.querySelector('.ti-contact-phone').textContent = 'Abra um chat para visualizar tickets';
-      
+      nameEl.textContent = '📭 Nenhuma conversa selecionada';
+      phoneEl.textContent = 'Abra um chat para visualizar tickets';
     }
-    
-    
   }
 
   async loadTickets() {
@@ -1729,6 +1837,7 @@ Comentário original: """${sanitizedComment}"""`;
         technician: ticket.tecnico,
         category: ticket.categoria_primaria,
         subcategory: ticket.categoria_secundaria,
+        subcategory2: ticket.categoria_terciaria,
         mesa: ticket.mesa_trabalho,
         lastLog: ticket.ultima_log
       })) : [];
@@ -1912,7 +2021,7 @@ Comentário original: """${sanitizedComment}"""`;
           ${ticket.category ? `
             <div class="ti-detail-row">
               <label>Categoria:</label>
-              <span>${ticket.category}${ticket.subcategory ? ' > ' + ticket.subcategory : ''}</span>
+              <span>${[ticket.category, ticket.subcategory, ticket.subcategory2].filter(Boolean).join(' > ')}</span>
             </div>
           ` : ''}
           ${ticket.mesa ? `
@@ -2015,13 +2124,18 @@ Comentário original: """${sanitizedComment}"""`;
             <label>Descrição *</label>
             <textarea id="ti-ticket-description" rows="4" required></textarea>
           </div>
+          <input type="hidden" id="ti-ticket-cat-id" value="" />
           <div class="ti-form-group">
             <label>Categoria Primária</label>
-            <input type="text" id="ti-ticket-cat1" placeholder="Ex: Hardware, Software" />
+            <input type="text" id="ti-ticket-cat1" placeholder="Ex: Tecnologia da Informação, Marketing" />
           </div>
           <div class="ti-form-group">
             <label>Categoria Secundária</label>
-            <input type="text" id="ti-ticket-cat2" placeholder="Ex: Troca de peça, Instalação" />
+            <input type="text" id="ti-ticket-cat2" placeholder="Ex: Hardware, Impressoras, Software" />
+          </div>
+          <div class="ti-form-group">
+            <label>Categoria Terciária</label>
+            <input type="text" id="ti-ticket-cat3" placeholder="Ex: Instalação, Troca de peça" />
           </div>
           <div class="ti-form-actions">
             <button type="submit" class="ti-btn ti-btn-primary">Criar Chamado</button>
@@ -2053,7 +2167,7 @@ Comentário original: """${sanitizedComment}"""`;
       }
     }
 
-    // Preenche categorias se foram sugeridas pela IA
+    // Preenche categorias se foram sugeridas pela IA (até 3 níveis)
     const cat1Input = document.getElementById('ti-ticket-cat1');
     if (cat1Input && prefill.primaryCategory) {
       cat1Input.value = prefill.primaryCategory;
@@ -2066,9 +2180,16 @@ Comentário original: """${sanitizedComment}"""`;
       cat2Input.classList.add('ti-ai-filled');
     }
 
-    // Se temos category ID, mostra nos logs
-    if (prefill.categoryId) {
-      
+    const cat3Input = document.getElementById('ti-ticket-cat3');
+    if (cat3Input && prefill.tertiaryCategory) {
+      cat3Input.value = prefill.tertiaryCategory;
+      cat3Input.classList.add('ti-ai-filled');
+    }
+
+    // Guarda o ID da categoria folha sugerida (usado no envio, se disponível)
+    const catIdInput = document.getElementById('ti-ticket-cat-id');
+    if (catIdInput && prefill.categoryId) {
+      catIdInput.value = prefill.categoryId;
     }
 
     setTimeout(() => {
@@ -2085,8 +2206,14 @@ Comentário original: """${sanitizedComment}"""`;
     const cliente_id = '04V63K'; // Cliente ID fixo
     const assunto = document.getElementById('ti-ticket-title')?.value;
     const descricao = document.getElementById('ti-ticket-description')?.value;
-    const categoria1 = document.getElementById('ti-ticket-cat1')?.value;
-    const categoria2 = document.getElementById('ti-ticket-cat2')?.value;
+    const categoria1 = document.getElementById('ti-ticket-cat1')?.value?.trim();
+    const categoria2 = document.getElementById('ti-ticket-cat2')?.value?.trim();
+    const categoria3 = document.getElementById('ti-ticket-cat3')?.value?.trim();
+
+    // Recalcula o ID da categoria a partir do caminho atual (caso o usuário tenha editado)
+    const categoryPath = [categoria1, categoria2, categoria3].filter(Boolean).join(' | ');
+    const categoryId = MILVUS_CATEGORIES[categoryPath] ||
+                       document.getElementById('ti-ticket-cat-id')?.value || '';
 
     try {
       // Limpa telefone removendo código do país (55)
@@ -2105,9 +2232,15 @@ Comentário original: """${sanitizedComment}"""`;
         chamado_contato: this.currentContact || 'WhatsApp',
       };
 
-      // Campos opcionais
+      // Campos opcionais — categorias em até 3 níveis (enviadas por nome,
+      // seguindo o mesmo padrão já usado para primária/secundária)
       if (categoria1) payload.chamado_categoria_primaria = categoria1;
       if (categoria2) payload.chamado_categoria_secundaria = categoria2;
+      if (categoria3) payload.chamado_categoria_terciaria = categoria3;
+
+      if (categoryId) {
+        console.log('[TI Support] Categoria selecionada:', categoryPath, '→ ID', categoryId);
+      }
 
       
 
