@@ -3,7 +3,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('configForm');
   const apiTokenInput = document.getElementById('apiToken');
-  const geminiKeyInput = document.getElementById('geminiKey');
+  const groqKeyInput = document.getElementById('groqKey');
   const saveBtn = document.getElementById('saveBtn');
   const statusDiv = document.getElementById('status');
   const defaultButtonContent = '<span>💾</span><span>Salvar configurações</span>';
@@ -12,12 +12,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const MILVUS_API_URL = 'https://apiintegracao.milvus.com.br/api';
 
   // Carrega o token salvo
-  chrome.storage.sync.get(['apiToken', 'geminiApiKey'], (result) => {
+  chrome.storage.sync.get(['apiToken', 'groqApiKey'], (result) => {
     if (result.apiToken) {
       apiTokenInput.value = result.apiToken;
     }
-    if (result.geminiApiKey) {
-      geminiKeyInput.value = result.geminiApiKey;
+    if (result.groqApiKey) {
+      groqKeyInput.value = result.groqApiKey;
     }
   });
 
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     
   const apiToken = apiTokenInput.value.trim();
-  const geminiKey = geminiKeyInput.value.trim();
+  const groqKey = groqKeyInput.value.trim();
     
     if (!apiToken) {
       showStatus('❌ Por favor, insira o token', 'error');
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
       chrome.storage.sync.set({ 
         apiBaseUrl: MILVUS_API_URL,
         apiToken: apiToken,
-        geminiApiKey: geminiKey || null
+        groqApiKey: groqKey || null
       }, () => {
         if (testResponse.ok) {
           showStatus('✅ Token salvo e conexão validada!', 'success');
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
       chrome.storage.sync.set({ 
         apiBaseUrl: MILVUS_API_URL,
         apiToken: apiToken,
-        geminiApiKey: geminiKey || null
+        groqApiKey: groqKey || null
       }, () => {
         showStatus('⚠️ Token salvo, mas não foi possível testar a conexão', 'error');
         saveBtn.disabled = false;

@@ -4,12 +4,17 @@
 // Configuração da API Milvus (pode ser alterada via popup)
 let API_BASE_URL = 'https://apiintegracao.milvus.com.br/api'; // URL da API Milvus
 let API_TOKEN = ''; // Token de autenticação
-let GEMINI_API_KEY = '';
+let GROQ_API_KEY = '';
 
-// Mapeamento de Categorias do Milvus — agora com 3 níveis.
-// Chave = caminho completo "Primária | Secundária | Terciária" (separado por " | ").
-// Valor = ID da categoria folha no Milvus.
-// O número de segmentos define a profundidade (1, 2 ou 3 níveis).
+// Configuração da API Groq (compatível com OpenAI)
+const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct'; // suporta texto e imagem
+
+// Mapeamento de Categorias do Milvus.
+// Categorizamos APENAS 2 níveis: Primária (departamento) | Secundária (categoria
+// principal). O 3º nível fica sempre em branco, então só as categorias principais
+// são oferecidas para classificação.
+// Chave = "Primária | Secundária"  |  Valor = ID da categoria no Milvus.
 const MILVUS_CATEGORIES = {
   // ===== Marketing =====
   'Marketing': '182267',
@@ -17,74 +22,14 @@ const MILVUS_CATEGORIES = {
 
   // ===== Tecnologia da Informação =====
   'Tecnologia da Informação': '182275',
-
-  // Acessos
   'Tecnologia da Informação | Acessos': '681485',
-  'Tecnologia da Informação | Criação de usuário | Novo colaborador / Cadastro de funcionário': '681486',
-  'Tecnologia da Informação | Liberação | Liberação Portões Estoque': '681487',
-  'Tecnologia da Informação | Liberações | Liberação de acesso Alarme': '681488',
-  'Tecnologia da Informação | Liberações | Liberação de acesso Outros': '681489',
-  'Tecnologia da Informação | Liberações | Liberação de acesso Pastas (NAS)': '681490',
-  'Tecnologia da Informação | Liberações | Liberação de funções ERP': '681491',
-  'Tecnologia da Informação | Liberações | Liberação de Sites / Firewall': '681492',
-  'Tecnologia da Informação | Recuperação de senha': '681493',
-  'Tecnologia da Informação | Remoção de Acessos': '681494',
-
-  // Backup
   'Tecnologia da Informação | Backup': '681495',
-  'Tecnologia da Informação | Backup | Corrompido': '681500',
-  'Tecnologia da Informação | Backup | Execução': '681499',
-  'Tecnologia da Informação | Backup | Não rodou': '681498',
-  'Tecnologia da Informação | Corrompido': '681497',
-  'Tecnologia da Informação | Restore | Execução': '681496',
-
-  // Gerencial
   'Tecnologia da Informação | Gerencial': '681535',
-  'Tecnologia da Informação | Procedimentos | Procedimento Operacional': '681536',
-  'Tecnologia da Informação | Relatórios | Prestação de contas': '681537',
-  'Tecnologia da Informação | Relatórios | Relatórios gerenciais / Saída': '681538',
-  'Tecnologia da Informação | Torno CNC / Produção | Torno CNC / Prorrogar expiração mensal': '681553',
-
-  // Hardware
   'Tecnologia da Informação | Hardware': '681527',
-  'Tecnologia da Informação | Computador | Configuração inicial': '681534',
-  'Tecnologia da Informação | Computador | Limpeza': '681533',
-  'Tecnologia da Informação | Computador | Não liga': '681532',
-  'Tecnologia da Informação | Computador | Troca de peça': '681531',
-  'Tecnologia da Informação | Infraestrutura | Mudança física': '681530',
-  'Tecnologia da Informação | Infraestrutura | Passagem de cabos': '681529',
-  'Tecnologia da Informação | Periféricos | Mouse / Teclado / Monitor / Outros': '681528',
-
-  // Impressoras
   'Tecnologia da Informação | Impressoras': '681522',
-  'Tecnologia da Informação | Impressoras | Instalação': '681523',
-  'Tecnologia da Informação | Impressoras | Manutenção': '681524',
-  'Tecnologia da Informação | Impressoras | Outros Problemas de impressão': '681525',
-  'Tecnologia da Informação | Impressoras | Suprimentos / Troca de Tonner': '681526',
-
-  // Servidor
   'Tecnologia da Informação | Servidor': '681518',
-  'Tecnologia da Informação | Servidor | Outros servidores / Virtualização': '681519',
-  'Tecnologia da Informação | Servidor | Servidor NAS': '681520',
-  'Tecnologia da Informação | Servidor | Servidor Windows': '681521',
-
-  // Software
   'Tecnologia da Informação | Software': '681507',
-  'Tecnologia da Informação | ERP (Sistema) | Ajuste / Parametrização': '681517',
-  'Tecnologia da Informação | ERP (Sistema) | Cadastro de funcionário': '681516',
-  'Tecnologia da Informação | ERP (Sistema) | Erro no sistema': '681515',
-  'Tecnologia da Informação | Licenças | Contratar software / licença': '681514',
-  'Tecnologia da Informação | Outros Softwares | Instalação / Configuração / Remoção': '681511',
-  'Tecnologia da Informação | Sistema Operacional': '681509',
-  'Tecnologia da Informação | SKA | Ajuste / Parametrização / ERRO': '681508',
-
-  // Telefonia
-  'Tecnologia da Informação | Telefonia': '681501',
-  'Tecnologia da Informação | Contratar Ramal / Linha / Linha Móvel / outros': '681506',
-  'Tecnologia da Informação | Ramal / Linha fixa | Configurar / Instalar': '681505',
-  'Tecnologia da Informação | Ramal / Linha fixa | Problema': '681504',
-  'Tecnologia da Informação | Telefonia móvel | Problema com Aparelho': '681503',
-  'Tecnologia da Informação | Telefonia móvel | Problema linha móvel / chip': '681502'
+  'Tecnologia da Informação | Telefonia': '681501'
 };
 
 // Quebra um caminho de categoria "A | B | C" em até 3 níveis.
@@ -101,15 +46,15 @@ function splitCategoryPath(categoryPath) {
 }
 
 // Carrega configurações salvas
-chrome.storage.sync.get(['apiBaseUrl', 'apiToken', 'geminiApiKey'], (result) => {
+chrome.storage.sync.get(['apiBaseUrl', 'apiToken', 'groqApiKey'], (result) => {
   if (result.apiBaseUrl) {
     API_BASE_URL = result.apiBaseUrl;
   }
   if (result.apiToken) {
     API_TOKEN = result.apiToken;
   }
-  if (result.geminiApiKey) {
-    GEMINI_API_KEY = result.geminiApiKey;
+  if (result.groqApiKey) {
+    GROQ_API_KEY = result.groqApiKey;
   }
 });
 
@@ -121,8 +66,8 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (changes.apiBaseUrl?.newValue) {
     API_BASE_URL = changes.apiBaseUrl.newValue;
   }
-  if ('geminiApiKey' in changes) {
-    GEMINI_API_KEY = changes.geminiApiKey?.newValue || '';
+  if ('groqApiKey' in changes) {
+    GROQ_API_KEY = changes.groqApiKey?.newValue || '';
   }
 });
 
@@ -1015,8 +960,8 @@ class WhatsAppSupportExtension {
       return;
     }
 
-    if (!GEMINI_API_KEY) {
-      this.showMessage('Configure a chave da Gemini API nas configurações da extensão.', 'error');
+    if (!GROQ_API_KEY) {
+      this.showMessage('Configure a chave da Groq API nas configurações da extensão.', 'error');
       return;
     }
 
@@ -1027,9 +972,9 @@ class WhatsAppSupportExtension {
       }
 
       if (imageData) {
-        this.showMessage('�� Analisando imagem com Gemini...', 'info');
+        this.showMessage('🖼️ Analisando imagem com Groq...', 'info');
       } else {
-        this.showMessage('�💡 Gerando sugestão de chamado com Gemini...', 'info');
+        this.showMessage('💡 Gerando sugestão de chamado com Groq...', 'info');
       }
 
       const suggestion = await this.generateTicketSuggestion(messageText, imageData);
@@ -1050,11 +995,11 @@ class WhatsAppSupportExtension {
         primaryCategory: suggestion.primaryCategory,
         secondaryCategory: suggestion.secondaryCategory,
         tertiaryCategory: suggestion.tertiaryCategory,
-        source: suggestion.source || 'gemini',
+        source: suggestion.source || 'groq',
         hasImage: !!imageData
       });
     } catch (error) {
-      console.error('Erro ao gerar sugestão com Gemini:', error);
+      console.error('Erro ao gerar sugestão com Groq:', error);
       this.showMessage(`Falha ao gerar sugestão: ${error.message}`, 'error');
 
       this.showNewTicketForm({
@@ -1071,9 +1016,8 @@ class WhatsAppSupportExtension {
 
   async generateTicketSuggestion(messageText, imageData = null) {
     const sanitizedMessage = messageText ? messageText.trim().slice(0, 4000) : '';
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
 
-    // Lista de categorias disponíveis para o Gemini escolher
+    // Lista de categorias disponíveis para a IA escolher
     const categoriesText = Object.keys(MILVUS_CATEGORIES).join('\n- ');
 
     let prompt = `Você é um analista de suporte técnico. `;
@@ -1101,10 +1045,11 @@ CATEGORIAS DISPON�VEIS:
 
     prompt += `
 
-IMPORTANTE sobre as categorias: a lista usa o formato "Primária | Secundária | Terciária"
-(separado por " | "). Escolha a opção que melhor descreve o problema e copie o caminho
-exatamente como aparece. A classificação usa APENAS os dois primeiros níveis
-(Primária e Secundária) — o terceiro nível é ignorado, então não se preocupe com ele.
+IMPORTANTE sobre as categorias: a lista usa o formato "Primária | Secundária"
+(separado por " | "), onde a Primária é o departamento (ex: Tecnologia da Informação)
+e a Secundária é a categoria principal (ex: Acessos, Backup, Hardware, Impressoras,
+Servidor, Software, Telefonia). Escolha a opção que melhor descreve o problema e copie
+o caminho EXATAMENTE como aparece na lista.
 
 Responda APENAS em JSON com o formato:
 {
@@ -1119,19 +1064,20 @@ Use um tom profissional e claro em português.`;
       prompt += `\n\nTexto da mensagem: """${sanitizedMessage}"""`;
     }
 
-    const parts = [];
-    
+    // Monta o conteúdo da mensagem no formato OpenAI/Groq
+    const content = [];
+
     // Adiciona o prompt de texto
-    parts.push({ text: prompt });
+    content.push({ type: 'text', text: prompt });
 
     // Adiciona imagem se disponível
     if (imageData) {
       try {
         const base64Image = await this.convertImageToBase64(imageData.element);
-        parts.push({
-          inline_data: {
-            mime_type: "image/jpeg",
-            data: base64Image
+        content.push({
+          type: 'image_url',
+          image_url: {
+            url: `data:image/jpeg;base64,${base64Image}`
           }
         });
       } catch (error) {
@@ -1142,24 +1088,28 @@ Use um tom profissional e claro em português.`;
       }
     }
 
+    // Se não houver imagem, envia o texto como string simples
+    const messageContent = content.length === 1 ? content[0].text : content;
+
     const payload = {
-      contents: [
+      model: GROQ_MODEL,
+      messages: [
         {
           role: 'user',
-          parts: parts
+          content: messageContent
         }
       ],
-      generationConfig: {
-        temperature: 0.35,
-        topP: 0.95,
-        maxOutputTokens: 2048
-      }
+      temperature: 0.35,
+      top_p: 0.95,
+      max_tokens: 2048,
+      response_format: { type: 'json_object' }
     };
 
-    const response = await fetch(endpoint, {
+    const response = await fetch(GROQ_ENDPOINT, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_API_KEY}`
       },
       body: JSON.stringify(payload)
     });
@@ -1167,14 +1117,13 @@ Use um tom profissional e claro em português.`;
     const data = await response.json();
 
     if (!response.ok) {
-      const errorMessage = data?.error?.message || 'Erro desconhecido na Gemini API';
+      const errorMessage = data?.error?.message || 'Erro desconhecido na Groq API';
       throw new Error(errorMessage);
     }
 
-    const responseParts = data?.candidates?.[0]?.content?.parts || [];
-    const combinedText = responseParts.map(part => part.text).filter(Boolean).join('\n').trim();
+    const combinedText = (data?.choices?.[0]?.message?.content || '').trim();
 
-    console.log('Gemini raw response:', combinedText);
+    console.log('Groq raw response:', combinedText);
 
     if (!combinedText) {
       return {
@@ -1183,7 +1132,7 @@ Use um tom profissional e claro em português.`;
         category: null,
         categoryId: null,
         notice: 'Não foi possível gerar sugestão automática. Conteúdo original carregado.',
-        source: 'gemini'
+        source: 'groq'
       };
     }
 
@@ -1200,7 +1149,7 @@ Use um tom profissional e claro em português.`;
       cleaned = jsonMatch[0];
     }
 
-    console.log('Gemini response (cleaned):', cleaned);
+    console.log('Groq response (cleaned):', cleaned);
 
     try {
       const parsed = JSON.parse(cleaned);
@@ -1229,24 +1178,23 @@ Use um tom profissional e claro em português.`;
         primaryCategory: primaryCategory,
         secondaryCategory: secondaryCategory,
         tertiaryCategory: tertiaryCategory,
-        source: 'gemini'
+        source: 'groq'
       };
     } catch (error) {
-      console.warn('Não foi possível interpretar resposta da Gemini como JSON. Texto bruto:', combinedText);
+      console.warn('Não foi possível interpretar resposta da Groq como JSON. Texto bruto:', combinedText);
       return {
         title: '',
         description: sanitizedMessage || '[Imagem anexada - descrição não gerada]',
         category: null,
         categoryId: null,
         notice: 'Sugestão recebida em formato inesperado. Conteúdo original carregado.',
-        source: 'gemini'
+        source: 'groq'
       };
     }
   }
 
   async generateCommentRefinement(originalComment, context = {}) {
     const sanitizedComment = originalComment.trim().slice(0, 4000);
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
 
     const ticketInfo = context.ticketId ? `#${context.ticketId}` : 'desconhecido';
     const contactInfo = context.contactName ? context.contactName : (context.contactPhone || 'Contato não identificado');
@@ -1264,25 +1212,24 @@ Retorne APENAS em JSON com o formato {"comment":"texto refinado"}.
 Comentário original: """${sanitizedComment}"""`;
 
     const payload = {
-      contents: [
+      model: GROQ_MODEL,
+      messages: [
         {
           role: 'user',
-          parts: [
-            { text: prompt }
-          ]
+          content: prompt
         }
       ],
-      generationConfig: {
-        temperature: 0.3,
-        topP: 0.9,
-        maxOutputTokens: 256
-      }
+      temperature: 0.3,
+      top_p: 0.9,
+      max_tokens: 256,
+      response_format: { type: 'json_object' }
     };
 
-    const response = await fetch(endpoint, {
+    const response = await fetch(GROQ_ENDPOINT, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_API_KEY}`
       },
       body: JSON.stringify(payload)
     });
@@ -1290,12 +1237,11 @@ Comentário original: """${sanitizedComment}"""`;
     const data = await response.json();
 
     if (!response.ok) {
-      const errorMessage = data?.error?.message || 'Erro desconhecido na Gemini API';
+      const errorMessage = data?.error?.message || 'Erro desconhecido na Groq API';
       throw new Error(errorMessage);
     }
 
-    const parts = data?.candidates?.[0]?.content?.parts || [];
-    const combinedText = parts.map(part => part.text).filter(Boolean).join('\n').trim();
+    const combinedText = (data?.choices?.[0]?.message?.content || '').trim();
 
     if (!combinedText) {
       return sanitizedComment;
@@ -1312,7 +1258,7 @@ Comentário original: """${sanitizedComment}"""`;
       const refined = typeof parsed.comment === 'string' ? parsed.comment.trim() : '';
       return refined || sanitizedComment;
     } catch (error) {
-      console.warn('Não foi possível interpretar resposta da Gemini para comentário. Texto bruto:', combinedText);
+      console.warn('Não foi possível interpretar resposta da Groq para comentário. Texto bruto:', combinedText);
       return sanitizedComment;
     }
   }
@@ -2095,12 +2041,12 @@ Comentário original: """${sanitizedComment}"""`;
       </div>
     ` : '';
 
-    let badgeText = '✨ Sugestão gerada pela Gemini (título, descrição e categorias)';
-    if (prefill.hasImage && suggestionSource === 'gemini') {
-      badgeText = '🖼� Sugestão gerada pela Gemini com análise de imagem';
+    let badgeText = '✨ Sugestão gerada pela Groq (título, descrição e categorias)';
+    if (prefill.hasImage && suggestionSource === 'groq') {
+      badgeText = '🖼️ Sugestão gerada pela Groq com análise de imagem';
     }
 
-    const badgeHtml = suggestionSource === 'gemini' ? `
+    const badgeHtml = suggestionSource === 'groq' ? `
       <span class="ti-context-badge">${badgeText}</span>
     ` : '';
 
@@ -2153,7 +2099,7 @@ Comentário original: """${sanitizedComment}"""`;
     const titleInput = document.getElementById('ti-ticket-title');
     if (titleInput) {
       titleInput.value = prefill.title ?? '';
-      if (prefill.title && suggestionSource === 'gemini') {
+      if (prefill.title && suggestionSource === 'groq') {
         titleInput.classList.add('ti-ai-filled');
       }
     }
@@ -2162,7 +2108,7 @@ Comentário original: """${sanitizedComment}"""`;
     if (descriptionInput) {
       const descriptionValue = prefill.description ?? (originalMessage || '');
       descriptionInput.value = descriptionValue;
-      if (prefill.description && suggestionSource === 'gemini') {
+      if (prefill.description && suggestionSource === 'groq') {
         descriptionInput.classList.add('ti-ai-filled');
       }
     }
@@ -2280,7 +2226,7 @@ Comentário original: """${sanitizedComment}"""`;
     form.innerHTML = `
       <textarea placeholder="Adicionar comentário..." rows="3"></textarea>
       <div class="ti-form-actions ti-comment-actions">
-        <button type="button" class="ti-btn-small ti-btn-gemini" title="Refinar comentário com ajuda da IA">✨ Refinar com Gemini</button>
+        <button type="button" class="ti-btn-small ti-btn-groq" title="Refinar comentário com ajuda da IA">✨ Refinar com Groq</button>
         <button class="ti-btn-small ti-btn-primary">Enviar</button>
         <button class="ti-btn-small ti-btn-secondary">Cancelar</button>
       </div>
@@ -2289,7 +2235,7 @@ Comentário original: """${sanitizedComment}"""`;
     card.appendChild(form);
 
     const textarea = form.querySelector('textarea');
-    const btnGemini = form.querySelector('.ti-btn-gemini');
+    const btnGroq = form.querySelector('.ti-btn-groq');
     const btnSend = form.querySelector('.ti-btn-primary');
     const btnCancel = form.querySelector('.ti-btn-secondary');
 
@@ -2297,23 +2243,23 @@ Comentário original: """${sanitizedComment}"""`;
       textarea.classList.remove('ti-ai-filled');
     });
 
-    btnGemini?.addEventListener('click', async () => {
+    btnGroq?.addEventListener('click', async () => {
       const originalText = textarea.value.trim();
 
       if (!originalText) {
-        this.showMessage('Digite algo antes de pedir ajuda à Gemini.', 'warning');
+        this.showMessage('Digite algo antes de pedir ajuda à Groq.', 'warning');
         textarea.focus();
         return;
       }
 
-      if (!GEMINI_API_KEY) {
-        this.showMessage('Configure a chave da Gemini API nas configurações.', 'error');
+      if (!GROQ_API_KEY) {
+        this.showMessage('Configure a chave da Groq API nas configurações.', 'error');
         return;
       }
 
-      btnGemini.disabled = true;
-      const previousLabel = btnGemini.textContent;
-      btnGemini.textContent = '� Refinando...';
+      btnGroq.disabled = true;
+      const previousLabel = btnGroq.textContent;
+      btnGroq.textContent = '⏳ Refinando...';
 
       try {
         const refined = await this.generateCommentRefinement(originalText, {
@@ -2325,16 +2271,16 @@ Comentário original: """${sanitizedComment}"""`;
         if (refined) {
           textarea.value = refined;
           textarea.classList.add('ti-ai-filled');
-          this.showMessage('Comentário refinado pela Gemini. Revise antes de enviar.', 'success');
+          this.showMessage('Comentário refinado pela Groq. Revise antes de enviar.', 'success');
         } else {
-          this.showMessage('A Gemini não conseguiu melhorar este comentário.', 'warning');
+          this.showMessage('A Groq não conseguiu melhorar este comentário.', 'warning');
         }
       } catch (error) {
-        console.error('Erro ao refinar comentário com Gemini:', error);
+        console.error('Erro ao refinar comentário com Groq:', error);
         this.showMessage('Não foi possível refinar o comentário agora.', 'error');
       } finally {
-        btnGemini.disabled = false;
-        btnGemini.textContent = previousLabel;
+        btnGroq.disabled = false;
+        btnGroq.textContent = previousLabel;
       }
     });
 
