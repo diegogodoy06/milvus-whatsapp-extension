@@ -370,34 +370,52 @@ class WhatsAppSupportExtension {
   setupMediaViewerObserver() {
     if (this.mediaViewerObserver) return;
 
+    // Guarda o último estado conhecido para só mexer no DOM (e, por tabela, no
+    // layout do WhatsApp) quando o visualizador realmente abre ou fecha.
+    let lastOpen = null;
     const update = () => {
       try {
         const open = this.isMediaViewerOpen();
+        if (open === lastOpen) return; // nada mudou: evita reflow desnecessário
+        lastOpen = open;
         document.body.classList.toggle('ti-media-open', open);
       } catch (e) {
         // Ignora erros de leitura de layout
       }
     };
 
-    // Throttle: roda no máximo uma vez a cada 150ms, com chamada final
-    let lastRun = 0;
-    let timer = null;
-    const schedule = () => {
-      const elapsed = Date.now() - lastRun;
-      if (elapsed >= 150) {
-        lastRun = Date.now();
+    // Debounce com teto de espera. Fechar a mídia faz o WhatsApp re-renderizar
+    // o chat inteiro, gerando uma tempestade de mutações. Em vez de rodar a
+    // verificação (cara) a cada mutação, esperamos o DOM "assentar" (120ms sem
+    // novas mutações) e só então verificamos — com um teto de 600ms para nunca
+    // demorar demais caso o WhatsApp fique mutando continuamente. A leitura de
+    // layout roda dentro de um requestAnimationFrame.
+    const DEBOUNCE = 120;
+    const MAX_WAIT = 600;
+    let debounceTimer = null;
+    let firstScheduledAt = 0;
+    let rafId = null;
+
+    const run = () => {
+      debounceTimer = null;
+      firstScheduledAt = 0;
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
         update();
-      } else if (!timer) {
-        timer = setTimeout(() => {
-          timer = null;
-          lastRun = Date.now();
-          update();
-        }, 150 - elapsed);
-      }
+      });
+    };
+
+    const schedule = () => {
+      const now = Date.now();
+      if (!firstScheduledAt) firstScheduledAt = now;
+      if (debounceTimer) clearTimeout(debounceTimer);
+      const delay = Math.min(DEBOUNCE, Math.max(0, MAX_WAIT - (now - firstScheduledAt)));
+      debounceTimer = setTimeout(run, delay);
     };
 
     // Observa o body inteiro: o visualizador pode ser anexado dentro do #app
-    // ou como elemento irmão dele. O custo é baixo por causa do throttle.
+    // ou como elemento irmão dele. O custo fica baixo por causa do debounce.
     this.mediaViewerObserver = new MutationObserver(schedule);
     this.mediaViewerObserver.observe(document.body, { childList: true, subtree: true });
 
