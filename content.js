@@ -332,17 +332,19 @@ class WhatsAppSupportExtension {
         right: auto !important;
       }
       
-      /* Esconde o painel quando o visualizador de mídia está aberto */
+      /* Esconde o painel quando um visualizador em tela cheia está aberto
+         (imagem, vídeo ou documento). A classe ti-media-open é alternada via JS
+         porque o WhatsApp Web não usa mais data-testid confiável. */
+      body.ti-media-open #ti-support-panel,
       body:has([data-testid="media-viewer"]) #ti-support-panel,
-      body:has([data-testid="image-preview"]) #ti-support-panel,
-      body:has([role="dialog"][aria-modal="true"]) #ti-support-panel {
+      body:has([data-testid="image-preview"]) #ti-support-panel {
         display: none !important;
       }
-      
-      /* Restaura o layout do WhatsApp quando visualizador está aberto */
+
+      /* Restaura a largura total do WhatsApp enquanto o visualizador está aberto */
+      body.ti-media-open #app,
       body:has([data-testid="media-viewer"]) #app,
-      body:has([data-testid="image-preview"]) #app,
-      body:has([role="dialog"][aria-modal="true"]) #app {
+      body:has([data-testid="image-preview"]) #app {
         width: 100vw !important;
         max-width: 100vw !important;
         margin-right: 0 !important;
@@ -350,6 +352,118 @@ class WhatsAppSupportExtension {
     `;
     document.head.appendChild(style);
     console.log('[TI Support] Estilos de layout aplicados');
+
+    // Passa a monitorar a abertura do visualizador de imagem/documento
+    this.setupMediaViewerObserver();
+  }
+
+  /**
+   * Detecta quando o WhatsApp abre um visualizador em tela cheia (imagem,
+   * vídeo ou documento) e alterna a classe `ti-media-open` no body. Com isso o
+   * painel é escondido e o WhatsApp recupera 100% da largura, evitando que
+   * metade da mídia fique escondida atrás do painel fixo.
+   *
+   * A detecção é genérica (não depende de data-testid, que o WhatsApp altera
+   * com frequência): procura um overlay posicionado de forma fixa que cubra
+   * praticamente toda a janela.
+   */
+  setupMediaViewerObserver() {
+    if (this.mediaViewerObserver) return;
+
+    const update = () => {
+      try {
+        const open = this.isMediaViewerOpen();
+        document.body.classList.toggle('ti-media-open', open);
+      } catch (e) {
+        // Ignora erros de leitura de layout
+      }
+    };
+
+    // Throttle: roda no máximo uma vez a cada 150ms, com chamada final
+    let lastRun = 0;
+    let timer = null;
+    const schedule = () => {
+      const elapsed = Date.now() - lastRun;
+      if (elapsed >= 150) {
+        lastRun = Date.now();
+        update();
+      } else if (!timer) {
+        timer = setTimeout(() => {
+          timer = null;
+          lastRun = Date.now();
+          update();
+        }, 150 - elapsed);
+      }
+    };
+
+    // Observa o body inteiro: o visualizador pode ser anexado dentro do #app
+    // ou como elemento irmão dele. O custo é baixo por causa do throttle.
+    this.mediaViewerObserver = new MutationObserver(schedule);
+    this.mediaViewerObserver.observe(document.body, { childList: true, subtree: true });
+
+    // Recalcula ao redimensionar a janela
+    window.addEventListener('resize', schedule, { passive: true });
+
+    // Verificação inicial
+    update();
+
+    console.log('[TI Support] Observer do visualizador de mídia configurado');
+  }
+
+  /**
+   * Retorna true se houver um visualizador em tela cheia aberto sobre o
+   * WhatsApp (imagem/vídeo/documento).
+   */
+  isMediaViewerOpen() {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    // Em telas estreitas o painel não desloca o suficiente para valer a pena
+    if (vw < 500) return false;
+
+    // 1) Procura um overlay em tela cheia. Amostra pontos na área do WhatsApp
+    //    (à esquerda do painel de 400px) e sobe na árvore procurando um
+    //    ancestral fixo que cubra praticamente toda a janela.
+    const sampleX = Math.round((vw - 400) / 2);
+    const points = [
+      [sampleX, Math.round(vh / 2)],
+      [sampleX, Math.round(vh * 0.3)]
+    ];
+
+    for (const [px, py] of points) {
+      let el = document.elementFromPoint(px, py);
+      let depth = 0;
+      while (el && depth < 14) {
+        if (el.id === 'ti-support-panel') break;
+        const cs = getComputedStyle(el);
+        if (cs.position === 'fixed' || cs.position === 'absolute') {
+          const r = el.getBoundingClientRect();
+          if (r.width >= vw * 0.9 && r.height >= vh * 0.9 &&
+              r.top <= 5 && r.left <= 5) {
+            return true;
+          }
+        }
+        el = el.parentElement;
+        depth++;
+      }
+    }
+
+    // 2) Reforço: mídia grande (imagem/vídeo) renderizada dentro de um
+    //    container fixo — assinatura do visualizador de imagem em tela cheia.
+    const media = document.querySelectorAll('#app img, #app video, #app canvas');
+    for (const el of media) {
+      const r = el.getBoundingClientRect();
+      if (r.width < vw * 0.5 || r.height < vh * 0.5) continue;
+      let node = el.parentElement;
+      let depth = 0;
+      while (node && depth < 10) {
+        if (getComputedStyle(node).position === 'fixed') return true;
+        node = node.parentElement;
+        depth++;
+      }
+    }
+
+    return false;
   }
 
   setupEventListeners() {
