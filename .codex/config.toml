@@ -1,0 +1,5 @@
+[mcp_servers.n8n-mcp]
+url = "https://hooks.steelbras.com.br/mcp-server/http"
+
+[mcp_servers.n8n-mcp.http_headers]
+Authorization = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYzdkYWU3OC02MmQyLTQxNGMtOGRlMC0yNWNlNWE5Y2YxZjIiLCJpc3MiOiJuOG4iLCJhdWQiOiJtY3Atc2VydmVyLWFwaSIsImp0aSI6ImQxZTQxZTM5LWQ0ZTItNDhkYi1hMmVkLWQ3ZTIxMDg2YWQyNSIsImlhdCI6MTc4MjE0MTYzOH0.hygp1_gaWFJpc-0IgZhyaEdd58pbrLDW9qNbM9riQ7U"

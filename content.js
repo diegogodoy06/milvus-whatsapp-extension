@@ -81,9 +81,13 @@ class WhatsAppSupportExtension {
     this.headerObserver = null;
     this.mainObserver = null;
     this.chatListObserver = null;
-  this.messageObserver = null;
-  this.contextMenuObserver = null;
-  this.lastContextMenuMessage = null;
+    this.themeObserver = null;
+    this.contextMenuObserver = null;
+    this.lastContextMenuMessage = null;
+    this.messageActionsSetup = false;
+    this.sharedTicketBtn = null;
+    this.hoveredMessage = null;
+    this.storeRequestInFlight = null;
     this.contactDetectionTimer = null;
     this.pendingPhoneRetryCount = 0;
     this.pendingNameRetryCount = 0;
@@ -130,34 +134,41 @@ class WhatsAppSupportExtension {
   }
 
   detectAndApplyTheme() {
-    // Detecta se o WhatsApp está em modo escuro
-    const isDark = document.body.classList.contains('dark') ||
-                   document.documentElement.getAttribute('data-theme') === 'dark' ||
-                   document.documentElement.getAttribute('data-color-scheme') === 'dark' ||
-                   getComputedStyle(document.body).backgroundColor === 'rgb(17, 27, 33)';
-    
-    if (isDark) {
-      document.body.setAttribute('data-theme', 'dark');
-      
-    } else {
-      document.body.setAttribute('data-theme', 'light');
-      
-    }
-    
-    // Observer para detectar mudanças de tema
-    const themeObserver = new MutationObserver(() => {
-      this.detectAndApplyTheme();
+    // getComputedStyle força recálculo de estilo, então só é usado na detecção
+    // inicial — nunca dentro do observer.
+    this.applyTheme(true);
+
+    // Observer criado UMA única vez. Antes, cada mutação criava um novo par de
+    // observers que chamava esta função de novo — multiplicação exponencial de
+    // observers, uma das principais causas de travamento.
+    if (this.themeObserver) return;
+
+    this.themeObserver = new MutationObserver(() => {
+      this.applyTheme(false);
     });
-    
-    themeObserver.observe(document.documentElement, {
+
+    this.themeObserver.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['data-theme', 'data-color-scheme', 'class']
     });
-    
-    themeObserver.observe(document.body, {
+
+    this.themeObserver.observe(document.body, {
       attributes: true,
       attributeFilter: ['class']
     });
+  }
+
+  applyTheme(checkComputedStyle = false) {
+    const isDark = document.body.classList.contains('dark') ||
+                   document.documentElement.getAttribute('data-theme') === 'dark' ||
+                   document.documentElement.getAttribute('data-color-scheme') === 'dark' ||
+                   (checkComputedStyle && getComputedStyle(document.body).backgroundColor === 'rgb(17, 27, 33)');
+
+    const next = isDark ? 'dark' : 'light';
+    // Evita reescrever o atributo (e re-disparar estilos) se nada mudou
+    if (document.body.getAttribute('data-theme') !== next) {
+      document.body.setAttribute('data-theme', next);
+    }
   }
 
   waitForWhatsAppLoad() {
@@ -286,7 +297,11 @@ class WhatsAppSupportExtension {
         top: 0 !important;
         width: 400px !important;
         height: 100vh !important;
-        z-index: 9999 !important;
+        /* z-index baixo de propósito: o painel fica no espaço reservado de 400px
+           (não sobrepõe a UI normal do WhatsApp), mas qualquer overlay de tela
+           cheia do WhatsApp — visualizador de imagem/vídeo, modais — fica POR CIMA
+           do painel naturalmente. Assim não precisamos detectar a mídia via JS. */
+        z-index: 100 !important;
         background: #ffffff !important;
       }
       
@@ -331,157 +346,15 @@ class WhatsAppSupportExtension {
       [data-testid="popup"] {
         right: auto !important;
       }
-      
-      /* Esconde o painel quando um visualizador em tela cheia está aberto
-         (imagem, vídeo ou documento). A classe ti-media-open é alternada via JS
-         porque o WhatsApp Web não usa mais data-testid confiável. */
-      body.ti-media-open #ti-support-panel,
-      body:has([data-testid="media-viewer"]) #ti-support-panel,
-      body:has([data-testid="image-preview"]) #ti-support-panel {
-        display: none !important;
-      }
-
-      /* Restaura a largura total do WhatsApp enquanto o visualizador está aberto */
-      body.ti-media-open #app,
-      body:has([data-testid="media-viewer"]) #app,
-      body:has([data-testid="image-preview"]) #app {
-        width: 100vw !important;
-        max-width: 100vw !important;
-        margin-right: 0 !important;
-      }
     `;
     document.head.appendChild(style);
     console.log('[TI Support] Estilos de layout aplicados');
 
-    // Passa a monitorar a abertura do visualizador de imagem/documento
-    this.setupMediaViewerObserver();
-  }
-
-  /**
-   * Detecta quando o WhatsApp abre um visualizador em tela cheia (imagem,
-   * vídeo ou documento) e alterna a classe `ti-media-open` no body. Com isso o
-   * painel é escondido e o WhatsApp recupera 100% da largura, evitando que
-   * metade da mídia fique escondida atrás do painel fixo.
-   *
-   * A detecção é genérica (não depende de data-testid, que o WhatsApp altera
-   * com frequência): procura um overlay posicionado de forma fixa que cubra
-   * praticamente toda a janela.
-   */
-  setupMediaViewerObserver() {
-    if (this.mediaViewerObserver) return;
-
-    // Guarda o último estado conhecido para só mexer no DOM (e, por tabela, no
-    // layout do WhatsApp) quando o visualizador realmente abre ou fecha.
-    let lastOpen = null;
-    const update = () => {
-      try {
-        const open = this.isMediaViewerOpen();
-        if (open === lastOpen) return; // nada mudou: evita reflow desnecessário
-        lastOpen = open;
-        document.body.classList.toggle('ti-media-open', open);
-      } catch (e) {
-        // Ignora erros de leitura de layout
-      }
-    };
-
-    // Debounce com teto de espera. Fechar a mídia faz o WhatsApp re-renderizar
-    // o chat inteiro, gerando uma tempestade de mutações. Em vez de rodar a
-    // verificação (cara) a cada mutação, esperamos o DOM "assentar" (120ms sem
-    // novas mutações) e só então verificamos — com um teto de 600ms para nunca
-    // demorar demais caso o WhatsApp fique mutando continuamente. A leitura de
-    // layout roda dentro de um requestAnimationFrame.
-    const DEBOUNCE = 120;
-    const MAX_WAIT = 600;
-    let debounceTimer = null;
-    let firstScheduledAt = 0;
-    let rafId = null;
-
-    const run = () => {
-      debounceTimer = null;
-      firstScheduledAt = 0;
-      if (rafId) return;
-      rafId = requestAnimationFrame(() => {
-        rafId = null;
-        update();
-      });
-    };
-
-    const schedule = () => {
-      const now = Date.now();
-      if (!firstScheduledAt) firstScheduledAt = now;
-      if (debounceTimer) clearTimeout(debounceTimer);
-      const delay = Math.min(DEBOUNCE, Math.max(0, MAX_WAIT - (now - firstScheduledAt)));
-      debounceTimer = setTimeout(run, delay);
-    };
-
-    // Observa o body inteiro: o visualizador pode ser anexado dentro do #app
-    // ou como elemento irmão dele. O custo fica baixo por causa do debounce.
-    this.mediaViewerObserver = new MutationObserver(schedule);
-    this.mediaViewerObserver.observe(document.body, { childList: true, subtree: true });
-
-    // Recalcula ao redimensionar a janela
-    window.addEventListener('resize', schedule, { passive: true });
-
-    // Verificação inicial
-    update();
-
-    console.log('[TI Support] Observer do visualizador de mídia configurado');
-  }
-
-  /**
-   * Retorna true se houver um visualizador em tela cheia aberto sobre o
-   * WhatsApp (imagem/vídeo/documento).
-   */
-  isMediaViewerOpen() {
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-
-    // Em telas estreitas o painel não desloca o suficiente para valer a pena
-    if (vw < 500) return false;
-
-    // 1) Procura um overlay em tela cheia. Amostra pontos na área do WhatsApp
-    //    (à esquerda do painel de 400px) e sobe na árvore procurando um
-    //    ancestral fixo que cubra praticamente toda a janela.
-    const sampleX = Math.round((vw - 400) / 2);
-    const points = [
-      [sampleX, Math.round(vh / 2)],
-      [sampleX, Math.round(vh * 0.3)]
-    ];
-
-    for (const [px, py] of points) {
-      let el = document.elementFromPoint(px, py);
-      let depth = 0;
-      while (el && depth < 14) {
-        if (el.id === 'ti-support-panel') break;
-        const cs = getComputedStyle(el);
-        if (cs.position === 'fixed' || cs.position === 'absolute') {
-          const r = el.getBoundingClientRect();
-          if (r.width >= vw * 0.9 && r.height >= vh * 0.9 &&
-              r.top <= 5 && r.left <= 5) {
-            return true;
-          }
-        }
-        el = el.parentElement;
-        depth++;
-      }
-    }
-
-    // 2) Reforço: mídia grande (imagem/vídeo) renderizada dentro de um
-    //    container fixo — assinatura do visualizador de imagem em tela cheia.
-    const media = document.querySelectorAll('#app img, #app video, #app canvas');
-    for (const el of media) {
-      const r = el.getBoundingClientRect();
-      if (r.width < vw * 0.5 || r.height < vh * 0.5) continue;
-      let node = el.parentElement;
-      let depth = 0;
-      while (node && depth < 10) {
-        if (getComputedStyle(node).position === 'fixed') return true;
-        node = node.parentElement;
-        depth++;
-      }
-    }
-
-    return false;
+    // Antes existia um MutationObserver no body inteiro (subtree) para detectar
+    // a abertura do visualizador de mídia e esconder o painel. Isso causava
+    // travamentos longos ao abrir/fechar imagens (tempestade de mutações +
+    // leitura de layout). Removido: agora o painel tem z-index baixo e o
+    // overlay de tela cheia do WhatsApp simplesmente fica por cima dele.
   }
 
   setupEventListeners() {
@@ -595,86 +468,138 @@ class WhatsAppSupportExtension {
     this.lastStoreJid = undefined;
 
     this.storePollTimer = setInterval(async () => {
-      if (this.storeUnavailable) return;
+      // Não gasta CPU com a aba em segundo plano nem quando o Store não existe
+      if (this.storeUnavailable || document.hidden) return;
 
       const store = await this.getActiveChatFromStore();
       const jid = store && store.jid ? store.jid : null;
 
       if (jid !== this.lastStoreJid) {
         this.lastStoreJid = jid;
-        if (jid) {
-          console.log('[TI Support] Chat ativo (Store):', store.name, store.phone);
-        }
-        this.detectContactChange();
+        // Reaproveita o resultado do Store: evita uma 2ª ida ao injected.js
+        this.detectContactChange(store);
       }
-    }, 1500);
+    }, 2000);
   }
 
   setupMessageActions() {
-    // Limpa observer anterior se existir
-    if (this.messageObserver) {
-      this.messageObserver.disconnect();
-      this.messageObserver = null;
-    }
+    // Antes: um MutationObserver com subtree:true na área de mensagens injetava
+    // um botão + 4 listeners de hover em CADA mensagem. Como a própria injeção
+    // gera mutações observadas, isso criava um loop infinito de reprocessamento
+    // (4 querySelectorAll pesados + appendChild a cada 1,5s, para sempre) — a
+    // principal causa dos travamentos. Agora usamos DELEGAÇÃO: um único botão
+    // compartilhado e 2 listeners no #app, sem observer nenhum na lista.
+    if (this.messageActionsSetup) return;
 
-    const messagesArea = document.querySelector('[data-testid="conversation-panel-messages"]') ||
-                         document.querySelector('#main [role="application"]') ||
-                         document.querySelector('#main');
-
-    if (!messagesArea) {
-      console.log('[TI Support] Área de mensagens não encontrada, tentando novamente...');
+    const appElement = document.querySelector('#app');
+    if (!appElement) {
       setTimeout(() => this.setupMessageActions(), 3000);
       return;
     }
+    this.messageActionsSetup = true;
 
-    console.log('[TI Support] Configurando ações nas mensagens...');
+    const MESSAGE_SELECTOR = '[data-testid="msg-container"], [data-id], .message-in, .message-out, div.copyable-text';
 
-    // Função para anexar botões às mensagens (com limite para performance)
-    const attachButtonsToMessages = () => {
-      // Tenta múltiplos seletores para encontrar mensagens
-      let messages = messagesArea.querySelectorAll('[data-testid="msg-container"]:not([data-ti-action])');
-      
-      // Se não encontrou, tenta outros seletores
-      if (messages.length === 0) {
-        messages = messagesArea.querySelectorAll('div[class*="message-"]:not([data-ti-action])');
+    // Botão único compartilhado, movido para a mensagem sob o cursor
+    const ticketBtn = document.createElement('button');
+    ticketBtn.type = 'button';
+    ticketBtn.className = 'ti-simple-ticket-btn';
+    ticketBtn.title = 'Criar chamado de suporte';
+    ticketBtn.innerHTML = '🎫';
+    ticketBtn.style.cssText = `
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #00a884;
+      color: white;
+      border: 2px solid white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.15s, transform 0.15s;
+      pointer-events: none;
+      transform: scale(0.8);
+    `;
+    ticketBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      event.preventDefault();
+      if (this.hoveredMessage) {
+        this.handleMessageTicket(this.hoveredMessage);
       }
-      if (messages.length === 0) {
-        messages = messagesArea.querySelectorAll('div[data-id]:not([data-ti-action])');
+    });
+    this.sharedTicketBtn = ticketBtn;
+
+    // Delegação de hover: um único listener em vez de 4 por mensagem
+    appElement.addEventListener('mouseover', (event) => {
+      const target = event.target instanceof Element ? event.target : null;
+      if (!target) return;
+
+      // Só atua dentro da conversa aberta
+      if (!target.closest('#main, [role="main"]')) {
+        this.hideSharedTicketButton();
+        return;
       }
-      if (messages.length === 0) {
-        // Busca por estrutura típica de mensagem do WhatsApp
-        messages = messagesArea.querySelectorAll('div.copyable-text:not([data-ti-action])');
+
+      const msg = target.closest(MESSAGE_SELECTOR);
+      if (!msg) {
+        this.hideSharedTicketButton();
+        return;
       }
-      
-      console.log(`[TI Support] Encontradas ${messages.length} mensagens para processar`);
-      
-      // Limita a 20 mensagens por vez para não travar
-      const messagesToProcess = Array.from(messages).slice(-20);
-      
-      messagesToProcess.forEach(msg => {
-        this.attachMessageAction(msg);
-      });
+      if (msg === this.hoveredMessage) return;
+
+      this.showSharedTicketButtonOn(msg);
+    }, { passive: true });
+
+    // Registra a mensagem clicada para o item "Abrir chamado" do menu de contexto
+    const rememberMessage = (event) => {
+      const target = event.target instanceof Element ? event.target : null;
+      if (!target || ticketBtn.contains(target)) return;
+      const msg = target.closest(MESSAGE_SELECTOR);
+      this.lastContextMenuMessage = (msg && msg.closest('#main, [role="main"]')) ? msg : null;
     };
-
-    // Executa uma vez
-    setTimeout(attachButtonsToMessages, 500);
-
-    // Observer LEVE com debounce longo - observa subtree para pegar novas mensagens
-    let debounceTimer = null;
-    this.messageObserver = new MutationObserver(() => {
-      if (debounceTimer) clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(attachButtonsToMessages, 1500);
-    });
-
-    this.messageObserver.observe(messagesArea, {
-      childList: true,
-      subtree: true
-    });
+    appElement.addEventListener('click', rememberMessage, { capture: true, passive: true });
+    appElement.addEventListener('contextmenu', rememberMessage, { capture: true, passive: true });
 
     // Configura observer do menu de contexto
     this.setupContextMenuObserver();
-    
-    console.log('[TI Support] Ações nas mensagens configuradas');
+
+    console.log('[TI Support] Ações nas mensagens configuradas (delegação)');
+  }
+
+  showSharedTicketButtonOn(messageElement) {
+    const btn = this.sharedTicketBtn;
+    if (!btn || !messageElement) return;
+
+    this.hoveredMessage = messageElement;
+
+    if (btn.parentElement !== messageElement) {
+      if (!messageElement.style.position) {
+        messageElement.style.position = 'relative';
+      }
+      messageElement.appendChild(btn);
+    }
+
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+    btn.style.transform = 'scale(1)';
+  }
+
+  hideSharedTicketButton() {
+    const btn = this.sharedTicketBtn;
+    if (!btn || !this.hoveredMessage) return;
+
+    this.hoveredMessage = null;
+    btn.style.opacity = '0';
+    btn.style.pointerEvents = 'none';
+    btn.style.transform = 'scale(0.8)';
   }
 
   setupContextMenuObserver() {
@@ -687,12 +612,17 @@ class WhatsAppSupportExtension {
     if (!appElement) return;
 
     this.contextMenuObserver = new MutationObserver((mutations) => {
+      // Sem mensagem-alvo registrada não há o que injetar: sai imediatamente.
+      // Isso torna o custo do observer praticamente zero durante o uso normal
+      // (antes ele rodava querySelector em toda mutação do #app inteiro).
+      if (!this.lastContextMenuMessage) return;
+
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
           if (!(node instanceof HTMLElement)) continue;
-          
+
           // Busca menus de contexto
-          const menu = node.querySelector('[role="menu"]') || (node.matches('[role="menu"]') ? node : null);
+          const menu = node.matches('[role="menu"]') ? node : (node.childElementCount ? node.querySelector('[role="menu"]') : null);
           if (menu) {
             setTimeout(() => this.injectContextMenuItem(menu), 50);
           }
@@ -754,110 +684,6 @@ class WhatsAppSupportExtension {
     });
 
     menuElement.appendChild(menuItem);
-  }
-
-  attachMessageAction(messageElement) {
-    if (!messageElement || messageElement.getAttribute('data-ti-action')) {
-      return;
-    }
-
-    // Marca como processado primeiro para evitar duplicatas
-    messageElement.setAttribute('data-ti-action', 'true');
-
-    // Tenta extrair texto - se não tiver, pode ser imagem/mídia
-    const messageText = this.extractMessageTextFromBubble(messageElement);
-    
-    // Verifica se tem conteúdo (texto ou mídia)
-    const hasMedia = messageElement.querySelector('img, video, audio, [data-testid="image-thumb"]');
-    if (!messageText && !hasMedia) {
-      return;
-    }
-
-    // Detecta clique na setinha (menu dropdown) da mensagem para injetar no menu
-    const detectMenuClick = () => {
-      const menuButton = messageElement.querySelector('[data-testid="msg-menu"], [data-icon="down-context"], button[aria-label*="Menu"], span[data-icon="down"], [data-icon="tail-in"], [data-icon="tail-out"]');
-      if (menuButton && !menuButton.getAttribute('data-ti-listener')) {
-        menuButton.setAttribute('data-ti-listener', 'true');
-        menuButton.addEventListener('click', () => {
-          this.lastContextMenuMessage = messageElement;
-        }, { capture: true });
-      }
-    };
-
-    // Tenta detectar imediatamente
-    detectMenuClick();
-
-    // Cria botão customizado simples
-    const ticketBtn = document.createElement('button');
-    ticketBtn.type = 'button';
-    ticketBtn.className = 'ti-simple-ticket-btn';
-    ticketBtn.title = 'Criar chamado de suporte';
-    ticketBtn.innerHTML = '🎫';
-    ticketBtn.style.cssText = `
-      position: absolute;
-      top: -8px;
-      right: -8px;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: #00a884;
-      color: white;
-      border: 2px solid white;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-      z-index: 1000;
-      opacity: 0;
-      transition: opacity 0.15s, transform 0.15s;
-      pointer-events: none;
-      transform: scale(0.8);
-    `;
-
-    ticketBtn.addEventListener('click', (event) => {
-      event.stopPropagation();
-      event.preventDefault();
-      this.handleMessageTicket(messageElement);
-    });
-
-    // Configura o elemento para posicionamento relativo
-    messageElement.style.position = 'relative';
-    messageElement.style.overflow = 'visible';
-    messageElement.appendChild(ticketBtn);
-
-    // Função para mostrar botão
-    const showButton = () => {
-      ticketBtn.style.opacity = '1';
-      ticketBtn.style.pointerEvents = 'auto';
-      ticketBtn.style.transform = 'scale(1)';
-      detectMenuClick();
-    };
-    
-    // Função para esconder botão
-    const hideButton = () => {
-      ticketBtn.style.opacity = '0';
-      ticketBtn.style.pointerEvents = 'none';
-      ticketBtn.style.transform = 'scale(0.8)';
-    };
-
-    // Mostra/esconde no hover do elemento inteiro
-    messageElement.addEventListener('mouseenter', showButton);
-    messageElement.addEventListener('mouseleave', hideButton);
-    
-    // Mantém visível enquanto hover no próprio botão
-    ticketBtn.addEventListener('mouseenter', showButton);
-    ticketBtn.addEventListener('mouseleave', (e) => {
-      // Só esconde se o mouse não foi para o messageElement
-      if (!messageElement.contains(e.relatedTarget)) {
-        hideButton();
-      }
-    });
-  }
-
-  injectTicketButtonInMessageActions(messageElement) {
-    // Função removida - usando abordagem mais simples acima
   }
 
   extractMessageTextFromBubble(messageElement) {
@@ -1428,6 +1254,21 @@ Comentário original: """${sanitizedComment}"""`;
   async getActiveChatFromStore() {
     if (this.storeUnavailable) return null;
 
+    // Deduplica chamadas concorrentes (polling + detectContactChange):
+    // todas aguardam a mesma resposta em vez de abrir várias requisições.
+    if (this.storeRequestInFlight) {
+      return this.storeRequestInFlight;
+    }
+
+    this.storeRequestInFlight = this.requestActiveChatFromStore();
+    try {
+      return await this.storeRequestInFlight;
+    } finally {
+      this.storeRequestInFlight = null;
+    }
+  }
+
+  async requestActiveChatFromStore() {
     const result = await new Promise((resolve) => {
       const reqId = 'ti_' + Date.now() + '_' + Math.random().toString(36).slice(2);
       let done = false;
@@ -1460,13 +1301,11 @@ Comentário original: """${sanitizedComment}"""`;
     return result.data; // null (sem chat ativo) ou { name, phone, jid, isGroup }
   }
 
-  async detectContactChange() {
-
-
-
+  async detectContactChange(preloadedStore = null) {
     // Fonte primária: estado interno do WhatsApp via injected.js (Store).
     // O WhatsApp removeu o telefone do DOM, então lemos nome+telefone do Store.
-    const store = await this.getActiveChatFromStore();
+    // Quando chamado pelo polling, reaproveita o resultado já obtido.
+    const store = preloadedStore || await this.getActiveChatFromStore();
     const storeName = store && store.name ? store.name : '';
     const hasActiveStoreChat = !!(store && (store.phone || store.name));
 
@@ -1491,10 +1330,7 @@ Comentário original: """${sanitizedComment}"""`;
       this.pendingPhoneRetryCount = 0;
       this.pendingNameRetryCount = 0;
 
-      if (this.messageObserver) {
-        this.messageObserver.disconnect();
-        this.messageObserver = null;
-      }
+      this.hideSharedTicketButton();
       this.updateContactInfo();
       return;
     }
@@ -1737,11 +1573,9 @@ Comentário original: """${sanitizedComment}"""`;
       this.scheduleContactDetection(350 + this.pendingPhoneRetryCount * 100, `retentativa telefone (${this.pendingPhoneRetryCount})`);
     }
 
-    // Configura ações em mensagens ao confirmar conversa ativa
+    // Garante que a delegação de ações em mensagens está ativa (idempotente:
+    // depois da primeira configuração este chamado retorna imediatamente)
     this.setupMessageActions();
-
-    // Reforça a presença do botão no header
-    this.ensureToolbarButton();
   }
 
   extractPhoneNumber() {
