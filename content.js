@@ -8,7 +8,10 @@ let GROQ_API_KEY = '';
 
 // Configuração da API Groq (compatível com OpenAI)
 const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct'; // suporta texto e imagem
+// Modelo multimodal (suporta texto e imagem). A Groq descontinua modelos com
+// frequência, então este valor pode ser sobrescrito pelo popup (chave groqModel).
+const DEFAULT_GROQ_MODEL = 'qwen/qwen3.6-27b';
+let GROQ_MODEL = DEFAULT_GROQ_MODEL;
 
 // Mapeamento de Categorias do Milvus.
 // Categorizamos APENAS 2 níveis: Primária (departamento) | Secundária (categoria
@@ -46,7 +49,7 @@ function splitCategoryPath(categoryPath) {
 }
 
 // Carrega configurações salvas
-chrome.storage.sync.get(['apiBaseUrl', 'apiToken', 'groqApiKey'], (result) => {
+chrome.storage.sync.get(['apiBaseUrl', 'apiToken', 'groqApiKey', 'groqModel'], (result) => {
   if (result.apiBaseUrl) {
     API_BASE_URL = result.apiBaseUrl;
   }
@@ -55,6 +58,9 @@ chrome.storage.sync.get(['apiBaseUrl', 'apiToken', 'groqApiKey'], (result) => {
   }
   if (result.groqApiKey) {
     GROQ_API_KEY = result.groqApiKey;
+  }
+  if (result.groqModel) {
+    GROQ_MODEL = result.groqModel;
   }
 });
 
@@ -68,6 +74,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
   }
   if ('groqApiKey' in changes) {
     GROQ_API_KEY = changes.groqApiKey?.newValue || '';
+  }
+  if ('groqModel' in changes) {
+    GROQ_MODEL = changes.groqModel?.newValue || DEFAULT_GROQ_MODEL;
   }
 });
 

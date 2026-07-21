@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('configForm');
   const apiTokenInput = document.getElementById('apiToken');
   const groqKeyInput = document.getElementById('groqKey');
+  const groqModelInput = document.getElementById('groqModel');
   const saveBtn = document.getElementById('saveBtn');
   const statusDiv = document.getElementById('status');
   const defaultButtonContent = '<span>💾</span><span>Salvar configurações</span>';
@@ -12,12 +13,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const MILVUS_API_URL = 'https://apiintegracao.milvus.com.br/api';
 
   // Carrega o token salvo
-  chrome.storage.sync.get(['apiToken', 'groqApiKey'], (result) => {
+  chrome.storage.sync.get(['apiToken', 'groqApiKey', 'groqModel'], (result) => {
     if (result.apiToken) {
       apiTokenInput.value = result.apiToken;
     }
     if (result.groqApiKey) {
       groqKeyInput.value = result.groqApiKey;
+    }
+    if (result.groqModel) {
+      groqModelInput.value = result.groqModel;
     }
   });
 
@@ -27,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
   const apiToken = apiTokenInput.value.trim();
   const groqKey = groqKeyInput.value.trim();
+  const groqModel = groqModelInput.value.trim();
     
     if (!apiToken) {
       showStatus('❌ Por favor, insira o token', 'error');
@@ -58,10 +63,11 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       // Salva o token (sempre salva, mesmo se falhar o teste)
-      chrome.storage.sync.set({ 
+      chrome.storage.sync.set({
         apiBaseUrl: MILVUS_API_URL,
         apiToken: apiToken,
-        groqApiKey: groqKey || null
+        groqApiKey: groqKey || null,
+        groqModel: groqModel || null
       }, () => {
         if (testResponse.ok) {
           showStatus('✅ Token salvo e conexão validada!', 'success');
@@ -85,10 +91,11 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Erro ao testar token:', error);
       
       // Salva mesmo com erro de conexão
-      chrome.storage.sync.set({ 
+      chrome.storage.sync.set({
         apiBaseUrl: MILVUS_API_URL,
         apiToken: apiToken,
-        groqApiKey: groqKey || null
+        groqApiKey: groqKey || null,
+        groqModel: groqModel || null
       }, () => {
         showStatus('⚠️ Token salvo, mas não foi possível testar a conexão', 'error');
         saveBtn.disabled = false;
