@@ -14,10 +14,15 @@ const DEFAULT_GROQ_MODEL = 'qwen/qwen3.6-27b';
 let GROQ_MODEL = DEFAULT_GROQ_MODEL;
 
 // Mapeamento de Categorias do Milvus.
-// Categorizamos APENAS 2 níveis: Primária (departamento) | Secundária (categoria
-// principal). O 3º nível fica sempre em branco, então só as categorias principais
-// são oferecidas para classificação.
-// Chave = "Primária | Secundária"  |  Valor = ID da categoria no Milvus.
+// Categorizamos até 3 níveis: Primária (departamento) | Secundária (categoria
+// principal) | Terciária (detalhamento específico do problema). A IA escolhe o
+// caminho mais específico disponível.
+// Chave = "Primária | Secundária | Terciária"  |  Valor = ID da categoria no Milvus.
+//
+// OBS: alguns nomes de Terciária contêm " | " no próprio nome (ex: "Backup |
+// Corrompido", "Impressoras | Instalação"). Por isso a Primária e a Secundária
+// são SEMPRE os dois primeiros campos e todo o restante compõe a Terciária
+// (ver splitCategoryPath). Os nomes são mantidos EXATAMENTE como no Milvus.
 const MILVUS_CATEGORIES = {
   // ===== Marketing =====
   'Marketing': '182267',
@@ -25,14 +30,74 @@ const MILVUS_CATEGORIES = {
 
   // ===== Tecnologia da Informação =====
   'Tecnologia da Informação': '182275',
+
+  // --- Acessos ---
   'Tecnologia da Informação | Acessos': '681485',
+  'Tecnologia da Informação | Acessos | Criação de usuário | Novo colaborador / Cadastro de funcionário': '681486',
+  'Tecnologia da Informação | Acessos | Liberação | Liberação Portões Estoque': '681487',
+  'Tecnologia da Informação | Acessos | Liberações | Liberação de acesso Alarme': '681488',
+  'Tecnologia da Informação | Acessos | Liberações | Liberação de acesso Outros': '681489',
+  'Tecnologia da Informação | Acessos | Liberações | Liberação de acesso Pastas (NAS)': '681490',
+  'Tecnologia da Informação | Acessos | Liberações | Liberação de funções ERP': '681491',
+  'Tecnologia da Informação | Acessos | Liberações | Liberação de Sites / Firewall': '681492',
+  'Tecnologia da Informação | Acessos | Recuperação de senha': '681493',
+  'Tecnologia da Informação | Acessos | Remoção de Acessos': '681494',
+
+  // --- Backup ---
   'Tecnologia da Informação | Backup': '681495',
+  'Tecnologia da Informação | Backup | Backup | Corrompido': '681500',
+  'Tecnologia da Informação | Backup | Backup | Execução': '681499',
+  'Tecnologia da Informação | Backup | Backup | Não rodou': '681498',
+  'Tecnologia da Informação | Backup | Corrompido': '681497',
+  'Tecnologia da Informação | Backup | Restore | Execução': '681496',
+
+  // --- Gerencial ---
   'Tecnologia da Informação | Gerencial': '681535',
+  'Tecnologia da Informação | Gerencial | Procedimentos | Procedimento Operacional': '681536',
+  'Tecnologia da Informação | Gerencial | Relatórios | Prestação de contas': '681537',
+  'Tecnologia da Informação | Gerencial | Relatórios | Relatórios gerenciais / Saída': '681538',
+  'Tecnologia da Informação | Gerencial | Torno CNC / Produção | Torno CNC / Prorrogar expiração mensal': '681553',
+
+  // --- Hardware ---
   'Tecnologia da Informação | Hardware': '681527',
+  'Tecnologia da Informação | Hardware | Computador | Configuração inicial': '681534',
+  'Tecnologia da Informação | Hardware | Computador | Limpeza': '681533',
+  'Tecnologia da Informação | Hardware | Computador | Não liga': '681532',
+  'Tecnologia da Informação | Hardware | Computador | Troca de peça': '681531',
+  'Tecnologia da Informação | Hardware | Infraestrutura | Mudança física': '681530',
+  'Tecnologia da Informação | Hardware | Infraestrutura | Passagem de cabos': '681529',
+  'Tecnologia da Informação | Hardware | Periféricos | Mouse / Teclado / Monitor / Outros': '681528',
+
+  // --- Impressoras ---
   'Tecnologia da Informação | Impressoras': '681522',
+  'Tecnologia da Informação | Impressoras | Impressoras | Instalação': '681523',
+  'Tecnologia da Informação | Impressoras | Impressoras | Manutenção': '681524',
+  'Tecnologia da Informação | Impressoras | Impressoras | Outros Problemas de impressão': '681525',
+  'Tecnologia da Informação | Impressoras | Impressoras | Suprimentos / Troca de Tonner': '681526',
+
+  // --- Servidor ---
   'Tecnologia da Informação | Servidor': '681518',
+  'Tecnologia da Informação | Servidor | Servidor | Outros servidores / Virtualização': '681519',
+  'Tecnologia da Informação | Servidor | Servidor | Servidor NAS': '681520',
+  'Tecnologia da Informação | Servidor | Servidor | Servidor Windows': '681521',
+
+  // --- Software ---
   'Tecnologia da Informação | Software': '681507',
-  'Tecnologia da Informação | Telefonia': '681501'
+  'Tecnologia da Informação | Software | ERP (Sistema) | Ajuste / Parametrização': '681517',
+  'Tecnologia da Informação | Software | ERP (Sistema) | Cadastro de funcionário': '681516',
+  'Tecnologia da Informação | Software | ERP (Sistema) | Erro no sistema': '681515',
+  'Tecnologia da Informação | Software | Licenças | Contratar software / licença': '681514',
+  'Tecnologia da Informação | Software | Outros Softwares | Instalação / Configuração / Remoção': '681511',
+  'Tecnologia da Informação | Software | Sistema Operacional': '681509',
+  'Tecnologia da Informação | Software | SKA | Ajuste / Parametrização / ERRO': '681508',
+
+  // --- Telefonia ---
+  'Tecnologia da Informação | Telefonia': '681501',
+  'Tecnologia da Informação | Telefonia | Contratar Ramal / Linha / Linha Móvel / outros': '681506',
+  'Tecnologia da Informação | Telefonia | Ramal / Linha fixa | Configurar / Instalar': '681505',
+  'Tecnologia da Informação | Telefonia | Ramal / Linha fixa | Problema': '681504',
+  'Tecnologia da Informação | Telefonia | Telefonia móvel | Problema com Aparelho': '681503',
+  'Tecnologia da Informação | Telefonia | Telefonia móvel | Problema linha móvel / chip': '681502'
 };
 
 // Quebra um caminho de categoria "A | B | C" em até 3 níveis.
@@ -41,10 +106,12 @@ function splitCategoryPath(categoryPath) {
     return { primary: null, secondary: null, tertiary: null };
   }
   const parts = categoryPath.split(' | ').map(part => part.trim()).filter(Boolean);
+  // Primária e Secundária nunca contêm " | ". A Terciária pode conter (ex:
+  // "Backup | Corrompido"), então tudo a partir do 3º campo é reunido na Terciária.
   return {
     primary: parts[0] || null,
     secondary: parts[1] || null,
-    tertiary: parts[2] || null
+    tertiary: parts.length > 2 ? parts.slice(2).join(' | ') : null
   };
 }
 
@@ -996,7 +1063,7 @@ class WhatsAppSupportExtension {
 3. Criar uma descrição detalhada incluindo o que foi observado na imagem
 4. ESCOLHER a categoria mais adequada desta lista (use EXATAMENTE como está escrito):
 
-CATEGORIAS DISPON�VEIS:
+CATEGORIAS DISPONÍVEIS:
 - ${categoriesText}
 
 Considere a imagem como evidência principal do problema relatado.`;
@@ -1006,23 +1073,28 @@ Considere a imagem como evidência principal do problema relatado.`;
 2. Crie uma descrição detalhada
 3. ESCOLHA a categoria mais adequada desta lista (use EXATAMENTE como está escrito):
 
-CATEGORIAS DISPON�VEIS:
+CATEGORIAS DISPONÍVEIS:
 - ${categoriesText}`;
     }
 
     prompt += `
 
-IMPORTANTE sobre as categorias: a lista usa o formato "Primária | Secundária"
-(separado por " | "), onde a Primária é o departamento (ex: Tecnologia da Informação)
-e a Secundária é a categoria principal (ex: Acessos, Backup, Hardware, Impressoras,
-Servidor, Software, Telefonia). Escolha a opção que melhor descreve o problema e copie
-o caminho EXATAMENTE como aparece na lista.
+IMPORTANTE sobre as categorias: a lista usa o formato
+"Primária | Secundária | Terciária" (separado por " | "). A Primária é o
+departamento (ex: Tecnologia da Informação), a Secundária é a categoria principal
+(ex: Acessos, Backup, Hardware, Impressoras, Servidor, Software, Telefonia) e a
+Terciária é o detalhamento específico do problema (ex: "Impressoras | Instalação",
+"Recuperação de senha", "Computador | Não liga"). Sempre que existir uma Terciária
+que descreva o problema, escolha o caminho COMPLETO com os 3 níveis. Use uma opção
+mais curta (só "Primária | Secundária", ou só "Primária") apenas quando NENHUMA
+terciária se aplicar. Copie o caminho EXATAMENTE como aparece na lista, inclusive
+os " | " que fazem parte do nome da terciária.
 
 Responda APENAS em JSON com o formato:
 {
   "title": "...",
   "description": "...",
-  "category": "caminho exato da lista (ex: Tecnologia da Informação | Impressoras)"
+  "category": "caminho exato da lista (ex: Tecnologia da Informação | Impressoras | Impressoras | Instalação)"
 }
 
 Use um tom profissional e claro em português.`;
@@ -1133,8 +1205,7 @@ Use um tom profissional e claro em português.`;
         const levels = splitCategoryPath(parsed.category);
         primaryCategory = levels.primary;
         secondaryCategory = levels.secondary;
-        // Categorizamos apenas até o 2º nível; a terciária fica em branco propositalmente.
-        tertiaryCategory = null;
+        tertiaryCategory = levels.tertiary;
       }
 
       return {
