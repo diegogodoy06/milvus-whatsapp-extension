@@ -115,6 +115,169 @@ function splitCategoryPath(categoryPath) {
   };
 }
 
+// Lista de categorias na ordem em que aparece no prompt. A IA responde apenas o
+// número da opção, o que economiza tokens (entrada e saída) e evita erro de
+// digitação no caminho completo.
+const CATEGORY_OPTIONS = Object.keys(MILVUS_CATEGORIES);
+
+// Monta a lista compacta enviada no prompt: agrupa por Primária (departamento)
+// para não repetir "Tecnologia da Informação | " em ~50 linhas.
+const CATEGORY_PROMPT_LIST = (() => {
+  const lines = [];
+  let currentPrimary = null;
+
+  CATEGORY_OPTIONS.forEach((path, index) => {
+    const { primary } = splitCategoryPath(path);
+    if (primary !== currentPrimary) {
+      currentPrimary = primary;
+      lines.push(`[${primary}]`);
+    }
+    const rest = path.slice(primary.length).replace(/^\s*\|\s*/, '');
+    lines.push(`${index + 1}. ${rest || '(geral)'}`);
+  });
+
+  return lines.join('\n');
+})();
+
+// Converte a resposta da IA (número da lista ou caminho completo) na categoria do Milvus.
+function resolveCategoryFromResponse(parsed) {
+  const empty = {
+    category: null,
+    categoryId: null,
+    primaryCategory: null,
+    secondaryCategory: null,
+    tertiaryCategory: null
+  };
+
+  let path = null;
+  const index = Number(parsed?.categoryIndex);
+
+  if (Number.isInteger(index) && index >= 1 && index <= CATEGORY_OPTIONS.length) {
+    path = CATEGORY_OPTIONS[index - 1];
+  } else if (typeof parsed?.category === 'string' && MILVUS_CATEGORIES[parsed.category.trim()]) {
+    path = parsed.category.trim();
+  }
+
+  if (!path) return empty;
+
+  const levels = splitCategoryPath(path);
+  return {
+    category: path,
+    categoryId: MILVUS_CATEGORIES[path],
+    primaryCategory: levels.primary,
+    secondaryCategory: levels.secondary,
+    tertiaryCategory: levels.tertiary
+  };
+}
+
+// ===== Chamadas à Groq com tratamento de rate limit =====
+const GROQ_MAX_RETRIES = 3;
+const GROQ_MAX_RETRY_WAIT_MS = 30000;
+
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Lê quanto tempo esperar antes de repetir: header Retry-After ou o
+// "Please try again in 4.7925s" que vem na mensagem de erro da Groq.
+function parseGroqRetryDelay(response, data) {
+  const header = response.headers.get('retry-after');
+  if (header) {
+    const seconds = parseFloat(header);
+    if (Number.isFinite(seconds)) return seconds * 1000;
+  }
+
+  const message = data?.error?.message || '';
+  const match = message.match(/try again in\s+([\d.]+)\s*(ms|m|s)\b/i);
+  if (match) {
+    const value = parseFloat(match[1]);
+    if (Number.isFinite(value)) {
+      const unit = match[2].toLowerCase();
+      if (unit === 'ms') return value;
+      if (unit === 'm') return value * 60000;
+      return value * 1000;
+    }
+  }
+
+  return null;
+}
+
+// Detecta o erro do modo JSON estrito da Groq (code "json_validate_failed"),
+// que acontece quando a saída do modelo é truncada ou vem com texto extra.
+function isJsonValidationError(response, data) {
+  if (response.status !== 400) return false;
+  return data?.error?.code === 'json_validate_failed' ||
+    /failed to validate json/i.test(data?.error?.message || '');
+}
+
+// Envia o payload para a Groq, repetindo automaticamente em 429 (rate limit) e
+// erros temporários do servidor. onRetry(ms, tentativa) permite avisar o usuário.
+async function callGroqApi(payload, { onRetry } = {}) {
+  let lastError = new Error('Erro desconhecido na Groq API');
+  let body = { ...payload };
+  let jsonModeDropped = false;
+  let attempt = 0;
+
+  while (attempt <= GROQ_MAX_RETRIES) {
+    const response = await fetch(GROQ_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_API_KEY}`
+      },
+      body: JSON.stringify(body)
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (response.ok) return data;
+
+    // O modo JSON estrito rejeitou a saída. Modelos de raciocínio às vezes
+    // devolvem JSON truncado ou com texto em volta; repetimos sem o
+    // response_format e deixamos o parser tolerante do chamador resolver.
+    if (isJsonValidationError(response, data)) {
+      const failedGeneration = data?.error?.failed_generation;
+      console.warn('Groq: JSON inválido no modo estrito.', failedGeneration || data?.error?.message);
+
+      if (body.response_format && !jsonModeDropped) {
+        jsonModeDropped = true;
+        const { response_format, ...rest } = body;
+        body = rest;
+        continue; // não conta como tentativa de rate limit
+      }
+
+      // Último recurso: aproveita o texto bruto que a Groq devolveu.
+      if (failedGeneration) {
+        return { choices: [{ message: { content: failedGeneration } }] };
+      }
+    }
+
+    const isRateLimit = response.status === 429;
+    lastError = new Error(
+      isRateLimit
+        ? 'Limite de uso da Groq atingido (tokens por minuto). Aguarde alguns segundos e tente novamente.'
+        : (data?.error?.message || `Erro ${response.status} na Groq API`)
+    );
+    lastError.status = response.status;
+    lastError.isRateLimit = isRateLimit;
+    lastError.details = data?.error?.message || null;
+
+    const isRetryable = isRateLimit || response.status === 500 || response.status === 502 || response.status === 503;
+    if (!isRetryable || attempt === GROQ_MAX_RETRIES) break;
+
+    const suggested = parseGroqRetryDelay(response, data);
+    const delayMs = Math.min(suggested ?? (2000 * (attempt + 1)), GROQ_MAX_RETRY_WAIT_MS) + 500;
+
+    if (typeof onRetry === 'function') {
+      onRetry(delayMs, attempt + 1);
+    }
+
+    console.warn(`Groq retornou ${response.status}. Tentando novamente em ${Math.round(delayMs / 1000)}s...`, data?.error?.message || '');
+    await wait(delayMs);
+    attempt++;
+  }
+
+  throw lastError;
+}
+
 // Carrega configurações salvas
 chrome.storage.sync.get(['apiBaseUrl', 'apiToken', 'groqApiKey', 'groqModel'], (result) => {
   if (result.apiBaseUrl) {
@@ -1049,53 +1212,28 @@ class WhatsAppSupportExtension {
   }
 
   async generateTicketSuggestion(messageText, imageData = null) {
-    const sanitizedMessage = messageText ? messageText.trim().slice(0, 4000) : '';
-
-    // Lista de categorias disponíveis para a IA escolher
-    const categoriesText = Object.keys(MILVUS_CATEGORIES).join('\n- ');
+    const sanitizedMessage = messageText ? messageText.trim().slice(0, 2500) : '';
 
     let prompt = `Você é um analista de suporte técnico. `;
-    
-    if (imageData) {
-      prompt += `Analise a imagem fornecida e o texto (se houver) para:
-1. Descrever o que você vê na imagem (telas, erros, equipamentos, problemas visíveis)
-2. Gerar um título curto (até 80 caracteres) baseado no problema identificado
-3. Criar uma descrição detalhada incluindo o que foi observado na imagem
-4. ESCOLHER a categoria mais adequada desta lista (use EXATAMENTE como está escrito):
 
-CATEGORIAS DISPONÍVEIS:
-- ${categoriesText}
-
-Considere a imagem como evidência principal do problema relatado.`;
-    } else {
-      prompt += `Analise a mensagem e:
-1. Gere um título curto (até 80 caracteres)
-2. Crie uma descrição detalhada
-3. ESCOLHA a categoria mais adequada desta lista (use EXATAMENTE como está escrito):
-
-CATEGORIAS DISPONÍVEIS:
-- ${categoriesText}`;
-    }
+    prompt += imageData
+      ? `Analise a imagem (evidência principal do problema) e o texto, se houver.`
+      : `Analise a mensagem.`;
 
     prompt += `
 
-IMPORTANTE sobre as categorias: a lista usa o formato
-"Primária | Secundária | Terciária" (separado por " | "). A Primária é o
-departamento (ex: Tecnologia da Informação), a Secundária é a categoria principal
-(ex: Acessos, Backup, Hardware, Impressoras, Servidor, Software, Telefonia) e a
-Terciária é o detalhamento específico do problema (ex: "Impressoras | Instalação",
-"Recuperação de senha", "Computador | Não liga"). Sempre que existir uma Terciária
-que descreva o problema, escolha o caminho COMPLETO com os 3 níveis. Use uma opção
-mais curta (só "Primária | Secundária", ou só "Primária") apenas quando NENHUMA
-terciária se aplicar. Copie o caminho EXATAMENTE como aparece na lista, inclusive
-os " | " que fazem parte do nome da terciária.
+Gere:
+1. "title": título curto (até 80 caracteres) do problema identificado
+2. "description": descrição detalhada${imageData ? ', incluindo o que aparece na imagem (telas, erros, equipamentos)' : ''}
+3. "categoryIndex": o NÚMERO da categoria mais adequada da lista abaixo
 
-Responda APENAS em JSON com o formato:
-{
-  "title": "...",
-  "description": "...",
-  "category": "caminho exato da lista (ex: Tecnologia da Informação | Impressoras | Impressoras | Instalação)"
-}
+CATEGORIAS (agrupadas por departamento entre colchetes; " | " separa subníveis):
+${CATEGORY_PROMPT_LIST}
+
+Escolha sempre a opção MAIS ESPECÍFICA que descreva o problema. Use "(geral)" ou
+uma opção mais curta apenas quando nenhuma específica se aplicar.
+
+Responda APENAS em JSON: {"title":"...","description":"...","categoryIndex":0}
 
 Use um tom profissional e claro em português.`;
 
@@ -1140,25 +1278,17 @@ Use um tom profissional e claro em português.`;
       ],
       temperature: 0.35,
       top_p: 0.95,
-      max_tokens: 2048,
+      // Folga suficiente para modelos de raciocínio: se o orçamento acaba antes
+      // do fim do JSON, a Groq rejeita a resposta com "Failed to validate JSON".
+      max_tokens: 2000,
       response_format: { type: 'json_object' }
     };
 
-    const response = await fetch(GROQ_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROQ_API_KEY}`
-      },
-      body: JSON.stringify(payload)
+    const data = await callGroqApi(payload, {
+      onRetry: (delayMs) => {
+        this.showMessage(`⏳ Limite da Groq atingido. Tentando novamente em ${Math.ceil(delayMs / 1000)}s...`, 'info');
+      }
     });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      const errorMessage = data?.error?.message || 'Erro desconhecido na Groq API';
-      throw new Error(errorMessage);
-    }
 
     const combinedText = (data?.choices?.[0]?.message?.content || '').trim();
 
@@ -1175,8 +1305,10 @@ Use um tom profissional e claro em português.`;
       };
     }
 
-    // Limpa marcadores de código markdown
+    // Remove blocos de raciocínio (modelos como o qwen podem emiti-los quando o
+    // modo JSON estrito é desativado) e marcadores de código markdown.
     let cleaned = combinedText
+      .replace(/<think>[\s\S]*?<\/think>/gi, '')
       .replace(/^```json\s*/i, '')
       .replace(/^```\s*/i, '')
       .replace(/\s*```$/i, '')
@@ -1192,30 +1324,18 @@ Use um tom profissional e claro em português.`;
 
     try {
       const parsed = JSON.parse(cleaned);
-      
+
       // Extrai categorias (até 3 níveis: primária | secundária | terciária)
-      let categoryId = null;
-      let primaryCategory = null;
-      let secondaryCategory = null;
-      let tertiaryCategory = null;
-
-      if (parsed.category && MILVUS_CATEGORIES[parsed.category]) {
-        categoryId = MILVUS_CATEGORIES[parsed.category];
-
-        const levels = splitCategoryPath(parsed.category);
-        primaryCategory = levels.primary;
-        secondaryCategory = levels.secondary;
-        tertiaryCategory = levels.tertiary;
-      }
+      const category = resolveCategoryFromResponse(parsed);
 
       return {
         title: typeof parsed.title === 'string' ? parsed.title.trim() : '',
         description: typeof parsed.description === 'string' ? parsed.description.trim() : (sanitizedMessage || '[Imagem anexada - descrição não gerada]'),
-        category: parsed.category,
-        categoryId: categoryId,
-        primaryCategory: primaryCategory,
-        secondaryCategory: secondaryCategory,
-        tertiaryCategory: tertiaryCategory,
+        category: category.category,
+        categoryId: category.categoryId,
+        primaryCategory: category.primaryCategory,
+        secondaryCategory: category.secondaryCategory,
+        tertiaryCategory: category.tertiaryCategory,
         source: 'groq'
       };
     } catch (error) {
@@ -1259,25 +1379,15 @@ Comentário original: """${sanitizedComment}"""`;
       ],
       temperature: 0.3,
       top_p: 0.9,
-      max_tokens: 256,
+      max_tokens: 1024,
       response_format: { type: 'json_object' }
     };
 
-    const response = await fetch(GROQ_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROQ_API_KEY}`
-      },
-      body: JSON.stringify(payload)
+    const data = await callGroqApi(payload, {
+      onRetry: (delayMs) => {
+        this.showMessage(`⏳ Limite da Groq atingido. Tentando novamente em ${Math.ceil(delayMs / 1000)}s...`, 'info');
+      }
     });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      const errorMessage = data?.error?.message || 'Erro desconhecido na Groq API';
-      throw new Error(errorMessage);
-    }
 
     const combinedText = (data?.choices?.[0]?.message?.content || '').trim();
 
